@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreKit Suite — геологическая экосистема</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --paper:#f4ede0;
+    --paper-2:#ebe2d0;
+    --paper-3:#e0d6c0;
+    --paper-4:#d5c9ae;
+    --ink:#2a2118;
+    --ink-2:#4a3f2e;
+    --ink-3:#6b5e48;
+    --rule:#b8a88a;
+    --rule-2:#8a7a5c;
+    --rule-3:#c8ba9c;
+    --sepi:#8b3a1f;
+    --navy:#1e3a5f;
+    --forest:#4a5c3a;
+    --ochre:#b87333;
+    --rust:#7c2d12;
+    --shadow:0 1px 0 rgba(42,33,24,.06), 0 2px 6px rgba(42,33,24,.08);
+    --shadow-lg:0 8px 30px rgba(42,33,24,.16);
+  }
+  html{scroll-behavior:smooth;}
+  html.is-loading{overflow:hidden;}
+  body{
+    font-family:"PT Serif","Georgia","Times New Roman",serif;
+    font-size:16px;line-height:1.55;
+    color:var(--ink);
+    background:var(--paper);
+    overflow-x:hidden;
+    overflow-x:clip;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+  .mono{font-family:"PT Mono","Courier New",Consolas,monospace;letter-spacing:.5px;}
+  .smallcaps{font-variant:small-caps;letter-spacing:.15em;font-weight:600;}
+  .paper-texture{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    opacity:.5;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(184,168,138,.18) 0, transparent 22%),
+      radial-gradient(circle at 82% 15%, rgba(139,58,31,.06) 0, transparent 25%),
+      radial-gradient(circle at 40% 80%, rgba(139,58,31,.05) 0, transparent 20%),
+      radial-gradient(circle at 92% 65%, rgba(74,92,58,.05) 0, transparent 22%);
+    mix-blend-mode:multiply;
+  }
+  .paper-grain{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    opacity:.25;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(74,63,46,.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(74,63,46,.025) 0 1px, transparent 1px 4px);
+    mix-blend-mode:multiply;
+  }
+
+  /* ============================================================
+     ИЗОЛИНИИ ПО БОКАМ
+     ============================================================ */
+  .side-contours{
+    position:fixed;
+    top:0;bottom:0;
+    width:clamp(180px, 15vw, 340px);
+    z-index:1;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 2s cubic-bezier(.7,0,.3,1);
+    overflow:hidden;
+    mask-image:linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  }
+  .side-contours.is-visible{opacity:1;}
+  .side-contours--left{left:0;}
+  .side-contours--right{right:0;}
+  .side-contours svg{
+    width:100%;height:220%;
+    position:absolute;
+    top:-60%;left:0;
+    animation:driftContours 120s linear infinite;
+  }
+  .side-contours--right svg{transform:scaleX(-1);}
+  @keyframes driftContours{
+    from{translate:0 0;}
+    to{translate:0 -25%;}
+  }
+  .side-contour{
+    fill:none;
+    stroke:var(--rule-2);
+    stroke-width:.8;
+    stroke-opacity:.5;
+  }
+  .side-contour--accent{stroke:var(--sepi);stroke-opacity:.45;}
+  .side-contour--dense{stroke-opacity:.28;stroke-width:.6;}
+  @media(max-width:1280px){
+    .side-contours{display:none;}
+  }
+
+  /* ============================================================
+     PRELOADER
+     ============================================================ */
+  .preloader{
+    position:fixed;inset:0;z-index:9999;
+    background:var(--paper);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;
+    transition:opacity .9s cubic-bezier(.7,0,.3,1),visibility .9s;
+  }
+  .preloader.is-done{opacity:0;visibility:hidden;}
+  .preloader__mark{
+    font-family:"PT Serif","Georgia",serif;
+    font-size:48px;font-weight:700;letter-spacing:.08em;
+    color:var(--ink);
+    font-variant:small-caps;
+    animation:markIn 1.2s cubic-bezier(.7,0,.3,1) both;
+  }
+  .preloader__mark span{color:var(--sepi);}
+  @keyframes markIn{
+    0%{opacity:0;transform:translateY(20px);}
+    100%{opacity:1;transform:none;}
+  }
+  .preloader__sub{
+    font-family:"PT Mono",monospace;
+    font-size:11px;letter-spacing:.4em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    animation:markIn 1.2s .3s cubic-bezier(.7,0,.3,1) both;
+  }
+  .preloader__bar{
+    width:220px;height:1px;background:var(--rule);
+    position:relative;overflow:hidden;
+  }
+  .preloader__bar::after{
+    content:"";position:absolute;inset:0;
+    background:var(--sepi);
+    transform:translateX(-100%);
+    animation:loadBar 1.8s cubic-bezier(.7,0,.3,1) infinite;
+  }
+  @keyframes loadBar{
+    0%{transform:translateX(-100%);}
+    50%{transform:translateX(0);}
+    100%{transform:translateX(100%);}
+  }
+
+  /* ============================================================
+     PROGRESS
+     ============================================================ */
+  .progress-bar{
+    position:fixed;top:0;left:0;right:0;height:2px;
+    z-index:200;background:transparent;
+  }
+  .progress-bar__fill{
+    height:100%;width:0;
+    background:var(--sepi);
+    transition:width .1s linear;
+  }
+
+  /* ============================================================
+     NAV
+     ============================================================ */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:150;
+    padding:16px 40px;
+    display:flex;align-items:center;gap:24px;
+    transition:all .4s cubic-bezier(.7,0,.3,1);
+    border-bottom:1px solid transparent;
+  }
+  .nav.is-scrolled{
+    padding:12px 40px;
+    background:rgba(244,237,224,.94);
+    backdrop-filter:blur(10px);
+    border-bottom-color:var(--rule);
+  }
+  .nav__logo{
+    display:flex;align-items:center;gap:12px;
+    font-family:"PT Serif",serif;
+    font-weight:700;font-size:19px;
+    letter-spacing:.02em;
+    color:var(--ink);
+    font-variant:small-caps;
+  }
+  .nav__logo-mark{
+    width:36px;height:36px;
+    border:1px solid var(--ink);
+    border-radius:50%;
+    display:grid;place-items:center;
+    font-size:16px;
+    position:relative;
+    background:var(--paper-2);
+  }
+  .nav__logo-mark::before{
+    content:"";
+    position:absolute;inset:3px;
+    border:1px dashed var(--ink-3);
+    border-radius:50%;
+  }
+  .nav__logo span{color:var(--sepi);}
+  .nav__menu{
+    margin-left:auto;display:flex;gap:2px;align-items:center;
+    font-family:"PT Mono",monospace;
+    font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+  .nav__menu a{
+    padding:8px 14px;
+    color:var(--ink-2);
+    position:relative;
+    transition:color .3s;
+  }
+  .nav__menu a:hover{color:var(--sepi);}
+  .nav__menu a.is-active{color:var(--sepi);}
+  .nav__menu a.is-active::before{
+    content:"●";
+    position:absolute;left:2px;top:50%;transform:translateY(-50%);
+    font-size:8px;color:var(--sepi);
+  }
+  .nav__cta{
+    background:var(--ink);
+    color:var(--paper)!important;
+    margin-left:12px;
+    border:1px solid var(--ink);
+  }
+  .nav__cta:hover{
+    background:var(--sepi);
+    border-color:var(--sepi);
+    color:var(--paper)!important;
+  }
+  @media(max-width:900px){
+    .nav,.nav.is-scrolled{padding:12px 20px;}
+    .nav__menu a:not(.nav__cta){display:none;}
+  }
+
+  /* ============================================================
+     ОБЩИЕ РАМКИ / ШТАМПЫ / ЛИНИИ
+     ============================================================ */
+  .frame{
+    position:relative;
+    border:1px solid var(--rule-2);
+    background:var(--paper);
+  }
+  .frame--double{border:1px solid var(--rule-2);}
+  .frame--double::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .frame--double > *{position:relative;z-index:1;}
+
+  .corner-mark{
+    position:absolute;
+    width:14px;height:14px;
+    pointer-events:none;
+  }
+  .corner-mark::before,
+  .corner-mark::after{
+    content:"";position:absolute;background:var(--ink-2);
+  }
+  .corner-mark::before{width:100%;height:1px;top:0;left:0;}
+  .corner-mark::after{width:1px;height:100%;top:0;left:0;}
+  .corner-mark--tl{top:10px;left:10px;}
+  .corner-mark--tr{top:10px;right:10px;transform:scaleX(-1);}
+  .corner-mark--bl{bottom:10px;left:10px;transform:scaleY(-1);}
+  .corner-mark--br{bottom:10px;right:10px;transform:scale(-1,-1);}
+
+  .stamp{
+    display:inline-block;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--sepi);
+    border:1.5px solid var(--sepi);
+    padding:6px 12px 5px;
+    transform:rotate(-1.5deg);
+    font-weight:700;
+    background:rgba(255,255,255,.15);
+  }
+  .stamp--navy{color:var(--navy);border-color:var(--navy);}
+  .stamp--forest{color:var(--forest);border-color:var(--forest);}
+  .stamp--rust{color:var(--rust);border-color:var(--rust);}
+
+  .rule{border:none;border-top:1px solid var(--rule);margin:0;}
+  .rule--double{border-top:3px double var(--rule-2);}
+  .rule--dashed{border-top:1px dashed var(--rule-2);}
+  .rule--wavy{
+    height:5px;border:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='5' viewBox='0 0 20 5'><path d='M0 2.5 Q 5 0 10 2.5 T 20 2.5' fill='none' stroke='%238a7a5c' stroke-width='.8'/></svg>");
+    background-repeat:repeat-x;
+    background-position:0 50%;
+  }
+
+  /* ============================================================
+     HERO — титульный лист карты
+     ============================================================ */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    padding:100px 40px 60px;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    z-index:1;
+  }
+  .hero__map{
+    position:absolute;inset:0;
+    z-index:0;pointer-events:none;
+    overflow:hidden;
+  }
+  .hero__map svg{
+    position:absolute;top:50%;left:50%;
+    width:160%;height:160%;
+    transform:translate(-50%,-50%);
+    min-width:1400px;min-height:900px;
+  }
+  .topo-contour{
+    fill:none;
+    stroke:var(--rule-2);
+    stroke-width:.8;
+    stroke-opacity:.55;
+    stroke-dasharray:1;
+    stroke-dashoffset:1;
+  }
+  .hero__map svg.is-drawing .topo-contour{
+    animation:drawContour 3.4s cubic-bezier(.65,0,.35,1) forwards;
+  }
+  @keyframes drawContour{
+    from{stroke-dashoffset:1;}
+    to{stroke-dashoffset:0;}
+  }
+  .topo-contour--accent{stroke:var(--sepi);stroke-opacity:.5;stroke-width:1;}
+  .topo-contour--dense{stroke-opacity:.32;stroke-width:.6;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(1){animation-delay:.15s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(2){animation-delay:.30s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(3){animation-delay:.45s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(4){animation-delay:.60s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(5){animation-delay:.75s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(6){animation-delay:.90s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(7){animation-delay:1.05s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(8){animation-delay:1.20s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(9){animation-delay:1.35s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(10){animation-delay:1.50s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(11){animation-delay:1.65s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(12){animation-delay:1.80s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(13){animation-delay:1.95s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(14){animation-delay:2.10s;}
+  .hero__map svg.is-drawing .topo-contour:nth-child(15){animation-delay:2.25s;}
+
+  .hero__grid-lines{
+    position:absolute;inset:0;
+    z-index:1;pointer-events:none;overflow:hidden;
+    background-image:
+      linear-gradient(rgba(138,122,92,.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,122,92,.16) 1px, transparent 1px);
+    background-size:100px 100px;
+    mask-image:radial-gradient(ellipse at 50% 50%, #000 25%, transparent 78%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 25%, transparent 78%);
+  }
+  .hero__grid-marks{
+    position:absolute;inset:0;
+    z-index:2;pointer-events:none;
+  }
+  .grid-label{
+    position:absolute;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    color:var(--ink-3);
+    letter-spacing:.1em;
+    background:var(--paper);
+    padding:2px 6px;
+    border:1px solid var(--rule);
+  }
+
+  .hero__markers{
+    position:absolute;inset:0;
+    z-index:3;pointer-events:none;
+  }
+  .drill-marker{
+    position:absolute;
+    display:flex;align-items:center;gap:6px;
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    color:var(--ink-2);
+    font-weight:700;
+    letter-spacing:.05em;
+    opacity:0;
+    animation:markerIn 1.4s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  .drill-marker__dot{
+    width:10px;height:10px;
+    border:1.5px solid var(--sepi);
+    background:var(--paper);
+    position:relative;flex-shrink:0;
+  }
+  .drill-marker__dot::before{
+    content:"";position:absolute;
+    inset:2px;background:var(--sepi);
+  }
+  .drill-marker__dot::after{
+    content:"";position:absolute;
+    inset:-6px;border:1px dashed var(--sepi);
+    animation:spinRing 12s linear infinite;
+  }
+  .drill-marker__label{
+    background:var(--paper);
+    border:1px solid var(--ink-2);
+    padding:2px 7px;
+    white-space:nowrap;
+    color:var(--ink);
+  }
+  .drill-marker__label b{color:var(--sepi);}
+  @keyframes markerIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes spinRing{
+    to{transform:rotate(360deg);}
+  }
+  .drill-marker:nth-child(1){animation-delay:1.6s;top:30%;left:14%;}
+  .drill-marker:nth-child(2){animation-delay:1.8s;top:66%;left:22%;}
+  .drill-marker:nth-child(3){animation-delay:2.0s;top:42%;left:80%;}
+  .drill-marker:nth-child(4){animation-delay:2.2s;top:76%;left:70%;}
+  .drill-marker:nth-child(5){animation-delay:2.4s;top:22%;left:60%;}
+
+  .compass-box{
+    position:absolute;
+    bottom:48px;right:48px;
+    z-index:4;
+    width:110px;height:110px;
+    opacity:0;
+    animation:fadeIn 1.5s 1.6s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  .compass-box svg{width:100%;height:100%;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @media(max-width:900px){
+    .compass-box{width:70px;height:70px;bottom:22px;right:20px;}
+  }
+
+  .scale-box{
+    position:absolute;
+    bottom:60px;left:48px;
+    z-index:4;
+    opacity:0;
+    animation:fadeIn 1.5s 1.8s cubic-bezier(.7,0,.3,1) forwards;
+    font-family:"PT Mono",monospace;
+    color:var(--ink-2);
+    font-size:10px;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+  .scale-box__label{margin-bottom:5px;color:var(--ink-3);}
+  .scale-box__ruler{display:flex;align-items:flex-end;height:14px;}
+  .scale-box__seg{
+    width:28px;height:100%;
+    border:1px solid var(--ink-2);
+    border-right:none;
+    background:var(--paper);
+  }
+  .scale-box__seg:last-child{border-right:1px solid var(--ink-2);}
+  .scale-box__seg--dark{background:var(--ink-2);}
+  .scale-box__numbers{
+    display:flex;justify-content:space-between;
+    font-size:9px;margin-top:3px;color:var(--ink-3);
+  }
+  @media(max-width:900px){
+    .scale-box{bottom:24px;left:20px;}
+    .scale-box__seg{width:18px;}
+  }
+
+  .hero__inner{
+    position:relative;z-index:5;
+    max-width:1000px;width:100%;
+    padding:0;
+  }
+  .hero__sheet{
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    padding:56px 60px 48px;
+    position:relative;
+    box-shadow:var(--shadow-lg);
+  }
+  .hero__sheet::before{
+    content:"";
+    position:absolute;inset:8px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .hero__sheet::after{
+    content:"";
+    position:absolute;inset:12px;
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .hero__sheet-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    padding-bottom:12px;
+    margin-bottom:32px;
+    border-bottom:1px solid var(--rule);
+  }
+  .hero__eyebrow{
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    letter-spacing:.4em;
+    text-transform:uppercase;
+    color:var(--sepi);
+    text-align:center;
+    margin-bottom:20px;
+    font-weight:700;
+  }
+  .hero__title{
+    text-align:center;
+    font-family:"PT Serif","Georgia",serif;
+    font-size:clamp(40px,6.4vw,88px);
+    line-height:1.02;
+    font-weight:700;
+    letter-spacing:-.01em;
+    color:var(--ink);
+    margin:0 0 18px;
+  }
+  .hero__title .accent{
+    color:var(--sepi);
+    font-style:italic;
+    font-weight:700;
+  }
+  .hero__title .small{
+    display:block;
+    font-size:.36em;
+    letter-spacing:.28em;
+    color:var(--ink-2);
+    font-variant:small-caps;
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  .hero__deco{
+    text-align:center;
+    margin:22px auto 26px;
+    max-width:200px;
+    height:8px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'><path d='M0 4 Q 3 0 6 4 T 12 4 T 18 4 T 24 4' fill='none' stroke='%238b3a1f' stroke-width='1'/></svg>");
+    background-repeat:repeat-x;
+    background-position:50% 50%;
+  }
+  .hero__lead{
+    text-align:center;
+    font-size:17px;
+    line-height:1.6;
+    max-width:640px;
+    margin:0 auto 36px;
+    color:var(--ink-2);
+    font-style:italic;
+  }
+  .hero__actions{
+    display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+    margin-bottom:36px;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:14px 26px;
+    font-family:"PT Mono",monospace;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    border:1px solid var(--ink);
+    transition:all .25s ease;
+    background:var(--paper);
+    color:var(--ink);
+    position:relative;
+  }
+  .btn--primary{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .btn--primary:hover{
+    background:var(--sepi);
+    border-color:var(--sepi);
+  }
+  .btn--ghost:hover{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .btn__ico{transition:transform .3s;}
+  .btn:hover .btn__ico{transform:translateX(4px);}
+
+  .hero__foot{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:14px;
+    padding-top:22px;
+    border-top:1px solid var(--rule);
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .hero__foot b{color:var(--ink-2);font-weight:700;}
+
+  @media(max-width:900px){
+    .hero{padding:80px 20px 40px;}
+    .hero__sheet{padding:36px 24px 32px;}
+    .hero__sheet-head{font-size:9.5px;letter-spacing:.15em;}
+  }
+
+  /* ============================================================
+     КООРДИНАТНАЯ ПОЛОСА
+     ============================================================ */
+  .strip{
+    background:var(--ink);
+    color:var(--paper);
+    padding:14px 0;
+    overflow:hidden;
+    border-top:1px solid var(--ink);
+    border-bottom:1px solid var(--ink);
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    position:relative;
+    z-index:2;
+  }
+  .strip__track{
+    display:inline-flex;
+    animation:marquee 60s linear infinite;
+    white-space:nowrap;
+  }
+  .strip__item{
+    display:inline-flex;align-items:center;gap:20px;
+    padding:0 20px;
+    color:var(--paper);
+    opacity:.9;
+  }
+  .strip__item::after{
+    content:"◆";color:var(--sepi);font-size:9px;
+  }
+  @keyframes marquee{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+
+  /* ============================================================
+     ВЕДОМОСТЬ ОСНОВНЫХ ПОКАЗАТЕЛЕЙ (stats)
+     ============================================================ */
+  .stats{
+    padding:90px 40px;
+    background:var(--paper-2);
+    border-bottom:1px solid var(--rule);
+    position:relative;z-index:2;
+  }
+  .stats__inner{
+    max-width:1280px;margin:0 auto;
+    border:1px solid var(--rule-2);
+    background:var(--paper);
+    position:relative;
+  }
+  .stats__inner::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .stats__head{
+    padding:16px 28px;
+    border-bottom:1px solid var(--rule);
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    background:var(--paper-3);
+    position:relative;z-index:1;
+  }
+  .stats__head b{color:var(--ink);}
+  .stats__grid{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:0;
+    position:relative;z-index:1;
+  }
+  .stat{
+    padding:44px 26px;
+    text-align:center;
+    position:relative;
+  }
+  .stat:not(:last-child)::after{
+    content:"";
+    position:absolute;right:0;top:20%;bottom:20%;
+    width:1px;background:var(--rule);
+  }
+  .stat__num{
+    font-family:"PT Serif",serif;
+    font-size:clamp(40px,5.4vw,64px);
+    font-weight:700;
+    line-height:1;
+    color:var(--sepi);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.02em;
+  }
+  .stat__num sub{
+    font-size:.4em;
+    color:var(--ink-3);
+    vertical-align:baseline;
+    margin-left:2px;
+  }
+  .stat__label{
+    margin-top:12px;
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    line-height:1.5;
+  }
+  .stat__num-line{
+    margin-top:8px;
+    height:1px;background:var(--rule);
+    width:40%;margin-left:auto;margin-right:auto;
+  }
+  @media(max-width:900px){
+    .stats__grid{grid-template-columns:repeat(2,1fr);}
+    .stat:nth-child(2)::after{display:none;}
+    .stat:nth-child(2),
+    .stat:nth-child(1){border-bottom:1px solid var(--rule);}
+  }
+
+  /* ============================================================
+     СЕКЦИИ
+     ============================================================ */
+  .section{
+    padding:110px 40px;
+    position:relative;
+    z-index:2;
+  }
+  @media(max-width:900px){.section{padding:70px 20px;}}
+  .container{max-width:1280px;margin:0 auto;width:100%;}
+  .container--narrow{max-width:960px;}
+
+  .section__head{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:24px;
+    align-items:end;
+    margin-bottom:56px;
+    padding-bottom:22px;
+    border-bottom:3px double var(--rule-2);
+  }
+  .section__num{
+    font-family:"PT Serif",serif;
+    font-size:64px;
+    font-weight:700;
+    line-height:.9;
+    color:var(--sepi);
+    letter-spacing:-.02em;
+    opacity:.85;
+  }
+  .section__kicker{
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    letter-spacing:.3em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin-bottom:8px;
+    font-weight:700;
+  }
+  .section__title{
+    font-family:"PT Serif",serif;
+    font-size:clamp(30px,4.4vw,52px);
+    line-height:1.05;
+    letter-spacing:-.015em;
+    font-weight:700;
+    margin:0;
+    color:var(--ink);
+  }
+  .section__title em{
+    font-style:italic;
+    color:var(--sepi);
+    font-weight:700;
+  }
+  .section__sub{
+    grid-column:1 / -1;
+    font-size:15.5px;
+    line-height:1.7;
+    color:var(--ink-2);
+    max-width:760px;
+    margin-top:12px;
+  }
+  @media(max-width:700px){
+    .section__head{grid-template-columns:1fr;}
+    .section__num{font-size:44px;}
+  }
+
+  .reveal{
+    opacity:0;transform:translateY(40px);
+    transition:opacity 1s cubic-bezier(.7,0,.3,1), transform 1s cubic-bezier(.7,0,.3,1);
+  }
+  .reveal.is-visible{opacity:1;transform:none;}
+
+  /* ============================================================
+     ПРОДУКТЫ — три бланка
+     ============================================================ */
+  .products{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  }
+  .product{
+    border:1px solid var(--rule-2);
+    background:var(--paper);
+    padding:0;
+    position:relative;
+    display:flex;flex-direction:column;
+    transition:all .35s cubic-bezier(.7,0,.3,1);
+    box-shadow:var(--shadow);
+  }
+  .product::before{
+    content:"";
+    position:absolute;inset:5px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .product:hover{
+    box-shadow:var(--shadow-lg);
+    transform:translateY(-4px);
+  }
+  .product__head{
+    padding:14px 22px;
+    border-bottom:1px solid var(--rule);
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    background:var(--paper-3);
+    position:relative;z-index:1;
+  }
+  .product__head b{color:var(--ink);}
+  .product__body{
+    padding:34px 26px 30px;
+    display:flex;flex-direction:column;
+    flex:1;
+    position:relative;z-index:1;
+  }
+  .product__icon{
+    width:60px;height:60px;
+    border:1px solid var(--accent);
+    background:var(--paper-2);
+    display:grid;place-items:center;
+    font-size:26px;
+    margin-bottom:22px;
+    color:var(--accent);
+    position:relative;
+  }
+  .product__icon::before{
+    content:"";
+    position:absolute;inset:3px;
+    border:1px dashed var(--accent);
+    opacity:.5;
+  }
+  .product__role{
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:8px;
+    font-weight:700;
+  }
+  .product__title{
+    font-family:"PT Serif",serif;
+    font-size:28px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.1;
+    letter-spacing:-.015em;
+    margin-bottom:14px;
+  }
+  .product__desc{
+    font-size:14.5px;
+    line-height:1.65;
+    color:var(--ink-2);
+    flex:1;
+  }
+  .product__more{
+    margin-top:22px;
+    padding-top:14px;
+    border-top:1px dashed var(--rule);
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .product__more span{transition:transform .35s;}
+  .product:hover .product__more span{transform:translateX(6px);}
+  .product--geo{--accent:var(--ochre);}
+  .product--drill{--accent:#9d174d;}
+  .product--station{--accent:var(--navy);}
+  @media(max-width:1024px){.products{grid-template-columns:1fr;}}
+
+  /* ============================================================
+     STICKY SHOWCASE
+     ============================================================ */
+  .sticky-section{
+    position:relative;
+    background:var(--paper-2);
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    z-index:2;
+  }
+  .sticky-inner{
+    position:relative;
+    max-width:1440px;margin:0 auto;
+    display:grid;grid-template-columns:1.05fr .95fr;gap:60px;
+    padding:120px 40px;
+  }
+  @media(max-width:1024px){
+    .sticky-inner{grid-template-columns:1fr;gap:36px;padding:70px 20px;}
+  }
+  .sticky-col--visual{
+    position:sticky;
+    top:100px;
+    align-self:start;
+    display:flex;
+    align-items:flex-start;
+    max-height:calc(100vh - 140px);
+  }
+  @media(max-width:1024px){
+    .sticky-col--visual{position:relative;top:0;height:auto;max-height:none;}
+  }
+  .sticky-col--text{
+    display:flex;flex-direction:column;gap:40px;
+  }
+
+  .sticky-step{
+    position:relative;
+    padding:0 0 0 0;
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    padding:32px 36px 30px;
+  }
+  .sticky-step::before{
+    content:"";
+    position:absolute;inset:5px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .sticky-step__head{
+    display:flex;align-items:baseline;gap:12px;
+    padding-bottom:12px;
+    margin-bottom:20px;
+    border-bottom:1px solid var(--rule);
+    position:relative;z-index:1;
+  }
+  .sticky-step__num{
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--accent,var(--sepi));
+    font-weight:700;
+  }
+  .sticky-step__chapter{
+    margin-left:auto;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .sticky-step__title{
+    font-family:"PT Serif",serif;
+    font-size:clamp(22px,2.6vw,30px);
+    font-weight:700;
+    line-height:1.15;
+    letter-spacing:-.01em;
+    margin:0 0 16px;
+    color:var(--ink);
+    position:relative;z-index:1;
+  }
+  .sticky-step__text{
+    font-size:15px;
+    line-height:1.65;
+    color:var(--ink-2);
+    margin:0 0 20px;
+    position:relative;z-index:1;
+  }
+  .sticky-step__list{
+    list-style:none;
+    display:grid;gap:10px;
+    position:relative;z-index:1;
+  }
+  .sticky-step__list li{
+    font-size:14.5px;
+    line-height:1.55;
+    color:var(--ink-2);
+    display:grid;
+    grid-template-columns:22px 1fr;
+    gap:10px;
+    align-items:start;
+  }
+  .sticky-step__list li::before{
+    content:"§";
+    color:var(--accent,var(--sepi));
+    font-family:"PT Serif",serif;
+    font-weight:700;
+    font-size:17px;
+    line-height:1;
+    text-align:center;
+    padding-top:2px;
+  }
+  .sticky-step--geo{--accent:var(--ochre);}
+  .sticky-step--drill{--accent:#9d174d;}
+  .sticky-step--station{--accent:var(--navy);}
+
+  /* ============================================================
+     РАМКА СКРИНШОТА (фототаблица)
+     ============================================================ */
+  .visual-frame{
+    position:relative;
+    width:100%;max-width:760px;
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    padding:0;
+  }
+  .visual-frame::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid var(--rule);
+    pointer-events:none;z-index:3;
+  }
+  .visual-frame__head{
+    padding:12px 20px;
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:center;gap:12px;
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    background:var(--paper-3);
+    position:relative;z-index:4;
+  }
+  .visual-frame__head b{color:var(--ink);}
+  .visual-frame__head .file{margin-left:auto;color:var(--ink-2);}
+  .visual-frame__head::before{
+    content:"◉";
+    color:var(--sepi);
+    font-size:14px;
+  }
+  .visual-frame__stack{
+    position:relative;
+    aspect-ratio:16/10;
+    overflow:hidden;
+    background:var(--paper-3);
+    margin:0;
+  }
+  .visual-frame__stack img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    opacity:0;
+    z-index:2;
+    pointer-events:none;
+    transition:opacity .8s cubic-bezier(.7,0,.3,1),transform .8s cubic-bezier(.7,0,.3,1);
+    transform:scale(1.04);
+    cursor:zoom-in;
+  }
+  .visual-frame__stack img.is-active{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+  }
+  .visual-frame__stack img[data-failed="1"]{display:none !important;}
+  .visual-frame__ph{
+    position:absolute;inset:0;z-index:1;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:var(--ink-3);font-size:13px;text-align:center;
+    gap:8px;padding:40px;
+    background:var(--paper-2);
+    font-family:"PT Mono",monospace;
+    letter-spacing:.05em;
+  }
+  .visual-frame__ph b{color:var(--ink-2);font-size:14px;letter-spacing:.15em;text-transform:uppercase;}
+  .visual-frame__ph code{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    padding:3px 10px;
+    font-family:"PT Mono",monospace;
+    font-size:11.5px;
+    color:var(--sepi);
+  }
+  .visual-frame__stack.has-loaded .visual-frame__ph{display:none;}
+
+  .visual-frame__label{
+    padding:10px 20px;
+    border-top:1px solid var(--rule);
+    display:flex;align-items:center;gap:12px;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    background:var(--paper-3);
+    position:relative;z-index:4;
+  }
+  .visual-frame__label b{color:var(--ink);}
+  .visual-frame__zoom{
+    margin-left:auto;
+    color:var(--sepi);
+    font-weight:700;
+    cursor:zoom-in;
+  }
+
+  .sticky-progress{display:none;}
+
+  /* ============================================================
+     ДОКУМЕНТЫ — образцы
+     ============================================================ */
+  .docs-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px;
+  }
+  .doc-card{
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    padding:0;
+    position:relative;
+    transition:all .4s cubic-bezier(.7,0,.3,1);
+    box-shadow:var(--shadow);
+  }
+  .doc-card::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid var(--rule);
+    pointer-events:none;z-index:1;
+  }
+  .doc-card:hover{
+    box-shadow:var(--shadow-lg);
+    transform:translateY(-4px);
+  }
+  .doc-card__head{
+    padding:14px 24px;
+    border-bottom:1px solid var(--rule);
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    background:var(--paper-3);
+    position:relative;z-index:2;
+  }
+  .doc-card__head b{color:var(--ink);}
+  .doc-card__body{
+    padding:26px 26px 24px;
+    position:relative;z-index:1;
+  }
+  .doc-card__title{
+    font-family:"PT Serif",serif;
+    font-size:22px;
+    font-weight:700;
+    color:var(--ink);
+    margin:0 0 10px;
+    line-height:1.2;
+  }
+  .doc-card__sub{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink-2);
+    margin:0 0 20px;
+  }
+  .doc-card__shot{
+    position:relative;
+    background:var(--paper-3);
+    border:1px solid var(--rule);
+    aspect-ratio:4/3;
+    overflow:hidden;
+    cursor:zoom-in;
+  }
+  .doc-card__shot img{
+    width:100%;height:100%;
+    object-fit:contain;
+    background:var(--paper-3);
+    padding:16px;
+    cursor:zoom-in;
+  }
+  .doc-card__shot .ph{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;padding:30px;text-align:center;
+    color:var(--ink-3);font-size:12px;line-height:1.55;
+    font-family:"PT Mono",monospace;
+    background:var(--paper-2);
+  }
+  .doc-card__shot .ph.is-show{display:flex;}
+  .doc-card__shot .ph b{color:var(--ink-2);font-size:13px;}
+  .doc-card__shot .ph code{
+    background:var(--paper);border:1px solid var(--rule);
+    padding:2px 8px;font-family:"PT Mono",monospace;
+    font-size:11px;color:var(--sepi);
+  }
+  @media(max-width:900px){.docs-grid{grid-template-columns:1fr;}}
+
+  /* ============================================================
+     ХРОНОЛОГИЯ (timeline)
+     ============================================================ */
+  .timeline{
+    max-width:940px;margin:0 auto;
+    position:relative;padding:20px 0;
+  }
+  .timeline::before{
+    content:"";
+    position:absolute;
+    left:56px;top:0;bottom:0;
+    width:1px;
+    background-image:linear-gradient(180deg, var(--rule-2) 50%, transparent 50%);
+    background-size:1px 8px;
+  }
+  .timeline__item{
+    position:relative;
+    padding:0 0 48px 140px;
+    opacity:0;transform:translateY(40px);
+    transition:opacity .9s cubic-bezier(.7,0,.3,1),transform .9s cubic-bezier(.7,0,.3,1);
+  }
+  .timeline__item.is-visible{opacity:1;transform:none;}
+  .timeline__item:last-child{padding-bottom:0;}
+  .timeline__num{
+    position:absolute;left:0;top:0;
+    width:112px;
+    text-align:right;
+    padding-right:12px;
+    font-family:"PT Serif",serif;
+    font-size:44px;
+    line-height:1;
+    font-weight:700;
+    color:var(--sepi);
+    letter-spacing:-.02em;
+  }
+  .timeline__num::after{
+    content:"";
+    position:absolute;right:-9px;top:14px;
+    width:9px;height:9px;
+    background:var(--paper);
+    border:1.5px solid var(--sepi);
+    transform:rotate(45deg);
+  }
+  .timeline__meta{
+    display:flex;gap:14px;align-items:baseline;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .timeline__tag{
+    display:inline-block;
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--paper);
+    background:var(--navy);
+    padding:4px 10px 3px;
+    font-weight:700;
+  }
+  .timeline__tag--geo{background:var(--ochre);}
+  .timeline__tag--drill{background:#9d174d;}
+  .timeline__tag--office{background:var(--forest);}
+  .timeline__tag--station{background:var(--navy);}
+  .timeline__date{
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    color:var(--ink-3);
+    letter-spacing:.15em;
+  }
+  .timeline__title{
+    font-family:"PT Serif",serif;
+    font-size:clamp(20px,2.4vw,27px);
+    font-weight:700;
+    line-height:1.2;
+    margin:0 0 12px;
+    color:var(--ink);
+  }
+  .timeline__text{
+    font-size:15px;
+    line-height:1.7;
+    color:var(--ink-2);
+    max-width:680px;
+  }
+  @media(max-width:700px){
+    .timeline::before{left:36px;}
+    .timeline__item{padding-left:90px;padding-bottom:38px;}
+    .timeline__num{width:70px;font-size:30px;}
+    .timeline__num::after{top:10px;width:7px;height:7px;right:-6px;}
+  }
+
+  /* ============================================================
+     TECH
+     ============================================================ */
+  .tech-list{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+    border:1px solid var(--rule-2);
+    background:var(--paper);
+    position:relative;
+  }
+  .tech-list::before{
+    content:"";
+    position:absolute;inset:6px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .tech{
+    padding:32px 26px;
+    border-right:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    position:relative;z-index:1;
+    transition:background .3s;
+  }
+  .tech:hover{background:var(--paper-2);}
+  .tech__num{
+    font-family:"PT Mono",monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin-bottom:14px;
+  }
+  .tech__title{
+    font-family:"PT Serif",serif;
+    font-size:19px;
+    font-weight:700;
+    line-height:1.25;
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  .tech__text{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink-2);
+  }
+  .tech:nth-child(3n){border-right:none;}
+  .tech:nth-child(n+4){border-bottom:none;}
+  @media(max-width:1024px){
+    .tech-list{grid-template-columns:repeat(2,1fr);}
+    .tech:nth-child(3n){border-right:1px solid var(--rule);}
+    .tech:nth-child(2n){border-right:none;}
+    .tech:nth-child(n+4){border-bottom:1px solid var(--rule);}
+    .tech:nth-child(n+5){border-bottom:none;}
+  }
+  @media(max-width:640px){
+    .tech-list{grid-template-columns:1fr;}
+    .tech{border-right:none;border-bottom:1px solid var(--rule);}
+    .tech:last-child{border-bottom:none;}
+  }
+
+  /* ============================================================
+     CTA
+     ============================================================ */
+  .cta{
+    padding:110px 40px;
+    background:var(--paper-2);
+    border-top:1px solid var(--rule);
+    position:relative;z-index:2;
+  }
+  .cta__inner{
+    max-width:900px;margin:0 auto;
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    padding:60px 60px 52px;
+    position:relative;
+    text-align:center;
+    box-shadow:var(--shadow-lg);
+  }
+  .cta__inner::before{
+    content:"";
+    position:absolute;inset:8px;
+    border:1px solid var(--rule);
+    pointer-events:none;
+  }
+  .cta__stamp{
+    position:absolute;
+    top:-16px;right:40px;
+    transform:rotate(-4deg);
+    background:var(--paper);
+    border:2px solid var(--rust);
+    color:var(--rust);
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    padding:8px 16px;
+    z-index:2;
+  }
+  .cta h2{
+    font-family:"PT Serif",serif;
+    font-size:clamp(28px,4.6vw,52px);
+    line-height:1.1;
+    letter-spacing:-.015em;
+    font-weight:700;
+    margin:0 0 20px;
+    color:var(--ink);
+    position:relative;
+  }
+  .cta h2 em{color:var(--sepi);font-style:italic;}
+  .cta__sub{
+    font-size:16px;
+    line-height:1.7;
+    color:var(--ink-2);
+    max-width:600px;
+    margin:0 auto 36px;
+    font-style:italic;
+    position:relative;
+  }
+  .cta__row{
+    display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+    position:relative;
+  }
+  .cta__signatures{
+    margin-top:44px;padding-top:22px;
+    border-top:1px dashed var(--rule);
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:30px;
+    text-align:left;
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    color:var(--ink-3);
+    letter-spacing:.15em;
+    position:relative;
+  }
+  .cta__signatures b{
+    display:block;
+    padding-top:8px;
+    margin-top:22px;
+    border-top:1px solid var(--ink-2);
+    color:var(--ink);
+    letter-spacing:.1em;
+  }
+  @media(max-width:700px){
+    .cta__inner{padding:40px 24px 32px;}
+    .cta__signatures{grid-template-columns:1fr;gap:20px;}
+    .cta__stamp{right:20px;font-size:9.5px;padding:6px 12px;}
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .footer{
+    background:var(--ink);
+    color:var(--paper);
+    padding:70px 40px 30px;
+    position:relative;z-index:2;
+    border-top:1px solid var(--ink);
+  }
+  .footer__inner{
+    max-width:1280px;margin:0 auto;
+    display:grid;
+    grid-template-columns:1.6fr 1fr 1fr 1fr;
+    gap:50px;
+    padding-bottom:50px;
+    border-bottom:1px solid rgba(244,237,224,.2);
+  }
+  .footer__brand{
+    font-family:"PT Serif",serif;
+    font-size:24px;
+    font-weight:700;
+    font-variant:small-caps;
+    letter-spacing:.02em;
+    margin-bottom:18px;
+    color:var(--paper);
+  }
+  .footer__brand span{color:#e8a89a;}
+  .footer__desc{
+    font-size:14px;
+    line-height:1.7;
+    color:rgba(244,237,224,.75);
+    max-width:380px;
+    font-style:italic;
+  }
+  .footer__col h4{
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:#e8a89a;
+    margin:0 0 20px;
+  }
+  .footer__col ul{list-style:none;display:grid;gap:10px;}
+  .footer__col a{
+    font-size:14px;
+    color:rgba(244,237,224,.75);
+    transition:color .25s;
+  }
+  .footer__col a:hover{color:var(--paper);}
+  .footer__bottom{
+    max-width:1280px;margin:0 auto;
+    padding-top:26px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:rgba(244,237,224,.55);
+  }
+  .footer__bottom b{color:rgba(244,237,224,.8);}
+  @media(max-width:900px){
+    .footer{padding:50px 20px 24px;}
+    .footer__inner{grid-template-columns:1fr;gap:32px;}
+  }
+
+  /* ============================================================
+     TO TOP
+     ============================================================ */
+  .to-top{
+    position:fixed;bottom:28px;right:28px;z-index:100;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:var(--paper);
+    border:1px solid var(--rule-2);
+    display:grid;place-items:center;
+    font-size:16px;color:var(--ink-2);
+    opacity:0;pointer-events:none;
+    transform:translateY(20px) scale(.9);
+    transition:all .35s cubic-bezier(.7,0,.3,1);
+    box-shadow:var(--shadow-lg);
+    font-family:"PT Mono",monospace;
+  }
+  .to-top.is-visible{opacity:1;pointer-events:auto;transform:none;}
+  .to-top:hover{
+    background:var(--ink);color:var(--paper);
+    border-color:var(--ink);
+  }
+
+  /* ============================================================
+     LIGHTBOX
+     ============================================================ */
+  .lightbox{
+    position:fixed;inset:0;z-index:10001;
+    background:rgba(20,15,10,.94);
+    display:flex;align-items:center;justify-content:center;
+    padding:48px;
+    opacity:0;visibility:hidden;
+    transition:opacity .35s cubic-bezier(.7,0,.3,1),visibility .35s;
+    cursor:zoom-out;
+  }
+  .lightbox.is-open{opacity:1;visibility:visible;}
+  .lightbox__img{
+    max-width:100%;max-height:100%;
+    object-fit:contain;
+    background:var(--paper);
+    padding:8px;
+    box-shadow:0 40px 120px rgba(0,0,0,.7);
+    transform:scale(.94);
+    transition:transform .45s cubic-bezier(.7,0,.3,1);
+    cursor:default;
+    border:1px solid rgba(244,237,224,.15);
+  }
+  .lightbox.is-open .lightbox__img{transform:scale(1);}
+  .lightbox__close{
+    position:absolute;top:24px;right:24px;
+    width:46px;height:46px;
+    background:var(--paper);
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-size:18px;
+    display:grid;place-items:center;
+    cursor:pointer;
+    transition:all .3s cubic-bezier(.7,0,.3,1);
+    z-index:2;
+    border-radius:50%;
+  }
+  .lightbox__close:hover{
+    background:var(--sepi);color:var(--paper);
+    border-color:var(--sepi);
+    transform:rotate(90deg);
+  }
+  .lightbox__caption{
+    position:absolute;top:28px;left:50%;transform:translateX(-50%);
+    color:var(--paper);
+    font-family:"PT Mono",monospace;
+    font-size:11px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    padding:8px 18px;
+    border:1px solid rgba(244,237,224,.3);
+    background:rgba(20,15,10,.6);
+    z-index:2;pointer-events:none;
+    max-width:80%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .lightbox__hint{
+    position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+    color:rgba(244,237,224,.5);
+    font-family:"PT Mono",monospace;
+    font-size:10.5px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    pointer-events:none;
+  }
+  @media(max-width:900px){
+    .lightbox{padding:16px;}
+    .lightbox__close{top:12px;right:12px;width:40px;height:40px;}
+    .lightbox__hint{display:none;}
+  }
+
+  /* ============================================================
+     REDUCED MOTION
+     ============================================================ */
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms!important;
+      animation-iteration-count:1!important;
+      transition-duration:.01ms!important;
+    }
+    .reveal{opacity:1!important;transform:none!important;}
+    .hero__map svg.is-drawing .topo-contour{stroke-dashoffset:0!important;}
+    .drill-marker{opacity:1!important;}
+    .side-contours{opacity:1!important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="paper-texture"></div>
+<div class="paper-grain"></div>
+
+<!-- БОКОВЫЕ ИЗОЛИНИИ -->
+<div class="side-contours side-contours--left" aria-hidden="true">
+  <svg viewBox="0 0 400 2400" preserveAspectRatio="xMinYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <path class="side-contour" pathLength="1" d="M -50 100 C 80 60, 180 120, 260 90 S 380 40, 460 90"/>
+    <path class="side-contour" pathLength="1" d="M -50 180 C 80 140, 180 200, 260 170 S 380 120, 460 170"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 260 C 100 210, 200 290, 300 260 S 400 200, 460 240"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 320 C 100 290, 200 340, 300 320 S 400 290, 460 310"/>
+    <path class="side-contour" pathLength="1" d="M -50 420 C 80 380, 180 440, 260 410 S 380 360, 460 410"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 500 C 100 470, 200 520, 300 500 S 400 470, 460 490"/>
+    <path class="side-contour" pathLength="1" d="M -50 620 C 100 570, 200 650, 300 620 S 400 560, 460 600"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 720 C 100 680, 200 740, 300 720 S 400 680, 460 700"/>
+    <path class="side-contour" pathLength="1" d="M -50 820 C 80 780, 180 840, 260 810 S 380 760, 460 810"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 900 C 100 870, 200 920, 300 900 S 400 870, 460 890"/>
+    <path class="side-contour" pathLength="1" d="M -50 1000 C 100 950, 200 1030, 300 1000 S 400 940, 460 980"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1080 C 100 1050, 200 1100, 300 1080 S 400 1050, 460 1070"/>
+    <path class="side-contour" pathLength="1" d="M -50 1200 C 80 1160, 180 1220, 260 1190 S 380 1140, 460 1190"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1300 C 100 1250, 200 1330, 300 1300 S 400 1240, 460 1280"/>
+    <path class="side-contour" pathLength="1" d="M -50 1420 C 100 1380, 200 1440, 300 1420 S 400 1380, 460 1400"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1500 C 100 1470, 200 1520, 300 1500 S 400 1470, 460 1490"/>
+    <path class="side-contour" pathLength="1" d="M -50 1620 C 80 1580, 180 1640, 260 1610 S 380 1560, 460 1610"/>
+    <path class="side-contour" pathLength="1" d="M -50 1720 C 100 1680, 200 1740, 300 1720 S 400 1680, 460 1700"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1820 C 80 1780, 180 1840, 260 1810 S 380 1760, 460 1810"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1920 C 100 1870, 200 1950, 300 1920 S 400 1860, 460 1900"/>
+    <path class="side-contour" pathLength="1" d="M -50 2020 C 100 1980, 200 2040, 300 2020 S 400 1980, 460 2000"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2120 C 80 2080, 180 2140, 260 2110 S 380 2060, 460 2110"/>
+    <path class="side-contour" pathLength="1" d="M -50 2220 C 100 2180, 200 2240, 300 2220 S 400 2180, 460 2200"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2320 C 80 2280, 180 2340, 260 2310 S 380 2260, 460 2310"/>
+  </svg>
+</div>
+
+<div class="side-contours side-contours--right" aria-hidden="true">
+  <svg viewBox="0 0 400 2400" preserveAspectRatio="xMinYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <path class="side-contour" pathLength="1" d="M -50 140 C 100 100, 200 160, 300 130 S 400 80, 460 130"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 240 C 100 190, 200 270, 300 240 S 400 180, 460 220"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 340 C 100 300, 200 360, 300 340 S 400 300, 460 320"/>
+    <path class="side-contour" pathLength="1" d="M -50 460 C 100 420, 200 480, 300 460 S 400 420, 460 440"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 560 C 100 530, 200 580, 300 560 S 400 530, 460 550"/>
+    <path class="side-contour" pathLength="1" d="M -50 680 C 100 630, 200 710, 300 680 S 400 620, 460 660"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 780 C 100 740, 200 800, 300 780 S 400 740, 460 760"/>
+    <path class="side-contour" pathLength="1" d="M -50 880 C 80 840, 180 900, 260 870 S 380 820, 460 870"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 980 C 100 950, 200 1000, 300 980 S 400 950, 460 970"/>
+    <path class="side-contour" pathLength="1" d="M -50 1080 C 100 1040, 200 1100, 300 1080 S 400 1040, 460 1060"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1180 C 100 1140, 200 1200, 300 1180 S 400 1140, 460 1160"/>
+    <path class="side-contour" pathLength="1" d="M -50 1300 C 100 1260, 200 1320, 300 1300 S 400 1260, 460 1280"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1400 C 80 1360, 180 1420, 260 1390 S 380 1340, 460 1390"/>
+    <path class="side-contour" pathLength="1" d="M -50 1520 C 100 1480, 200 1540, 300 1520 S 400 1480, 460 1500"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1620 C 100 1590, 200 1640, 300 1620 S 400 1590, 460 1610"/>
+    <path class="side-contour" pathLength="1" d="M -50 1740 C 100 1700, 200 1760, 300 1740 S 400 1700, 460 1720"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1840 C 100 1800, 200 1860, 300 1840 S 400 1800, 460 1820"/>
+    <path class="side-contour" pathLength="1" d="M -50 1960 C 100 1920, 200 1980, 300 1960 S 400 1920, 460 1940"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2060 C 100 2030, 200 2080, 300 2060 S 400 2030, 460 2050"/>
+    <path class="side-contour" pathLength="1" d="M -50 2180 C 100 2140, 200 2200, 300 2180 S 400 2140, 460 2160"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2280 C 80 2240, 180 2300, 260 2270 S 380 2220, 460 2270"/>
+    <path class="side-contour" pathLength="1" d="M -50 2380 C 100 2340, 200 2400, 300 2380 S 400 2340, 460 2360"/>
+  </svg>
+</div>
+
+<!-- PRELOADER -->
+<div class="preloader" id="preloader">
+  <div class="preloader__mark">Core<span>Kit</span></div>
+  <div class="preloader__sub">Геологическая экосистема</div>
+  <div class="preloader__bar"></div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar">
+  <div class="progress-bar__fill" id="progressFill"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <a href="#" class="nav__logo">
+    <div class="nav__logo-mark">🧭</div>
+    Core<span>Kit</span>
+  </a>
+  <div class="nav__menu">
+    <a href="#products">Продукты</a>
+    <a href="#geo">Geo</a>
+    <a href="#drill">Drill</a>
+    <a href="#station">Station</a>
+    <a href="#docs">Документы</a>
+    <a href="#scenario">Сценарий</a>
+    <a href="#contact" class="nav__cta">Обсудить</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero__map">
+    <svg id="topoSVG" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path class="topo-contour" pathLength="1" d="M 260 380 C 340 300, 480 320, 560 400 S 620 580, 500 660 S 280 640, 220 540 S 180 460, 260 380 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 300 420 C 360 360, 460 380, 520 440 S 560 580, 470 630 S 320 620, 280 540 S 260 470, 300 420 Z"/>
+      <path class="topo-contour topo-contour--accent" pathLength="1" d="M 340 450 C 390 410, 450 430, 490 470 S 510 570, 450 600 S 360 590, 330 540 S 320 480, 340 450 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 370 480 C 400 460, 440 470, 460 500 S 470 560, 430 580 S 380 570, 360 540 S 360 500, 370 480 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 1050 320 C 1180 260, 1340 320, 1400 460 S 1380 680, 1220 740 S 980 720, 920 580 S 920 380, 1050 320 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 1100 370 C 1200 330, 1310 380, 1350 480 S 1330 640, 1200 680 S 1010 660, 970 560 S 990 400, 1100 370 Z"/>
+      <path class="topo-contour topo-contour--accent" pathLength="1" d="M 1140 420 C 1210 400, 1280 430, 1300 500 S 1280 600, 1200 620 S 1070 600, 1050 530 S 1080 440, 1140 420 Z"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 300 C 120 260, 200 300, 320 280 S 480 220, 620 280 S 780 340, 900 300"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 340 C 120 300, 200 340, 320 320 S 480 260, 620 320 S 780 380, 900 340"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 700 500 C 820 460, 900 500, 1020 480 S 1180 420, 1320 480 S 1480 540, 1600 500"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 700 540 C 820 500, 900 540, 1020 520 S 1180 460, 1320 520 S 1480 580, 1600 540"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 200 700 C 320 660, 400 700, 520 680 S 680 620, 820 680"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 200 740 C 320 700, 400 740, 520 720 S 680 660, 820 720"/>
+      <path class="topo-contour" pathLength="1" d="M 0 620 C 200 600, 400 640, 600 620 S 1000 580, 1200 620 S 1500 660, 1600 640"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 660 C 200 640, 400 680, 600 660 S 1000 620, 1200 660 S 1500 700, 1600 680"/>
+    </svg>
+  </div>
+
+  <div class="hero__grid-lines"></div>
+
+  <div class="hero__grid-marks">
+    <div class="grid-label" style="top:14%;left:20%">58°N</div>
+    <div class="grid-label" style="top:14%;left:60%">60°N</div>
+    <div class="grid-label" style="top:50%;left:14%">93°E</div>
+    <div class="grid-label" style="top:82%;left:44%">94°E</div>
+  </div>
+
+  <div class="hero__markers">
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label"><b>DH-101</b> · 124 м</span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label"><b>DH-102</b> · 98 м</span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label"><b>DH-103</b> · 156 м</span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label"><b>DH-104</b> · 82 м</span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label"><b>DH-105</b> · 110 м</span>
+    </div>
+  </div>
+
+  <div class="compass-box">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#4a3f2e" stroke-width="1"/>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#8a7a5c" stroke-width=".5" stroke-dasharray="3 3"/>
+      <circle cx="60" cy="60" r="34" fill="none" stroke="#8a7a5c" stroke-width=".5"/>
+      <line x1="60" y1="8" x2="60" y2="18" stroke="#2a2118" stroke-width="1.2"/>
+      <line x1="60" y1="102" x2="60" y2="112" stroke="#4a3f2e" stroke-width="1.2"/>
+      <line x1="8" y1="60" x2="18" y2="60" stroke="#4a3f2e" stroke-width="1.2"/>
+      <line x1="102" y1="60" x2="112" y2="60" stroke="#4a3f2e" stroke-width="1.2"/>
+      <path d="M 60 20 L 66 60 L 60 54 L 54 60 Z" fill="#8b3a1f" stroke="#2a2118" stroke-width=".8"/>
+      <path d="M 60 100 L 54 60 L 60 66 L 66 60 Z" fill="#f4ede0" stroke="#2a2118" stroke-width=".8"/>
+      <text x="60" y="16" font-family="PT Mono,monospace" font-size="9" font-weight="700" fill="#2a2118" text-anchor="middle">N</text>
+      <text x="60" y="118" font-family="PT Mono,monospace" font-size="7" fill="#4a3f2e" text-anchor="middle">S</text>
+      <text x="6" y="63" font-family="PT Mono,monospace" font-size="7" fill="#4a3f2e" text-anchor="middle">W</text>
+      <text x="114" y="63" font-family="PT Mono,monospace" font-size="7" fill="#4a3f2e" text-anchor="middle">E</text>
+      <circle cx="60" cy="60" r="3" fill="#8b3a1f"/>
+    </svg>
+  </div>
+
+  <div class="scale-box">
+    <div class="scale-box__label">Линейный масштаб</div>
+    <div class="scale-box__ruler">
+      <div class="scale-box__seg scale-box__seg--dark" style="width:28px"></div>
+      <div class="scale-box__seg"></div>
+      <div class="scale-box__seg scale-box__seg--dark"></div>
+      <div class="scale-box__seg"></div>
+    </div>
+    <div class="scale-box__numbers"><span>0</span><span>50</span><span>100 м</span></div>
+  </div>
+
+  <div class="hero__inner">
+    <div class="hero__sheet">
+      <div class="hero__sheet-head">
+        <span><b>Лист 1</b> из 15</span>
+        <span>Масштаб 1:5 000</span>
+        <span>Система СК-42</span>
+      </div>
+
+      <div class="hero__eyebrow">Геологическая экосистема · 2026</div>
+
+      <h1 class="hero__title">
+        <span class="small">CoreKit Suite</span>
+        Документация керна<br>
+        и буровые журналы<br>
+        <span class="accent">без бумаги и Excel</span>
+      </h1>
+
+      <div class="hero__deco"></div>
+
+      <p class="hero__lead">
+        Три приложения, которые закрывают полный цикл геологоразведки —
+        от кернового ящика в поле до сдачи итоговой документации
+        и аналитики по участку в офисе.
+      </p>
+
+      <div class="hero__actions">
+        <a href="#products" class="btn btn--primary">
+          Смотреть продукты
+          <span class="btn__ico">→</span>
+        </a>
+        <a href="#scenario" class="btn btn--ghost">
+          Хронология работ
+        </a>
+      </div>
+
+      <div class="hero__foot">
+        <span><b>Организация:</b> CoreKit</span>
+        <span><b>Участок:</b> Дальний · DH-104</span>
+        <span><b>Составил:</b> ведущий геолог</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- СТРИП -->
+<div class="strip">
+  <div class="strip__track" id="stripTrack"></div>
+</div>
+
+<!-- STATS — ведомость -->
+<section class="stats">
+  <div class="stats__inner">
+    <div class="stats__head">
+      <span><b>Ведомость основных показателей</b></span>
+      <span>Приложение А · раздел 1</span>
+    </div>
+    <div class="stats__grid">
+      <div class="stat reveal">
+        <div class="stat__num" data-count="3">0</div>
+        <div class="stat__num-line"></div>
+        <div class="stat__label">программы<br>в экосистеме</div>
+      </div>
+      <div class="stat reveal">
+        <div class="stat__num" data-count="100" data-suffix="%">0</div>
+        <div class="stat__num-line"></div>
+        <div class="stat__label">работает<br>оффлайн</div>
+      </div>
+      <div class="stat reveal">
+        <div class="stat__num" data-count="15" data-suffix="+">0</div>
+        <div class="stat__num-line"></div>
+        <div class="stat__label">типов<br>отчётов</div>
+      </div>
+      <div class="stat reveal">
+        <div class="stat__num" data-count="0" data-prefix="0&nbsp;">0</div>
+        <div class="stat__num-line"></div>
+        <div class="stat__label">за сервер<br>и связь</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="section" id="products">
+  <div class="container">
+    <div class="section__head reveal">
+      <div class="section__num">01</div>
+      <div>
+        <div class="section__kicker">Раздел первый · Состав экосистемы</div>
+        <h2 class="section__title">Три программы —<br><em>один маршрут данных</em></h2>
+      </div>
+      <p class="section__sub">
+        Геолог документирует керн в поле, буровой мастер ведёт смены и рейсы,
+        ведущий геолог в офисе собирает всё вместе и превращает в готовые документы.
+        Никакого сервера, никакой настройки сети — обмен обычными файлами.
+      </p>
+    </div>
+
+    <div class="products">
+      <a href="#geo" class="product product--geo reveal">
+        <div class="product__head">
+          <span><b>Бланк Г-1</b></span>
+          <span>Поле · Геолог</span>
+        </div>
+        <div class="product__body">
+          <div class="product__icon">📋</div>
+          <div class="product__role">Полевая документация</div>
+          <div class="product__title">CoreKit Geo</div>
+          <div class="product__desc">
+            Полный цикл документации керна на планшете или ноутбуке. Литология,
+            тектоника, прожилки, руда, метасоматоз, опробование, живая валидация —
+            всё у кернового ящика.
+          </div>
+          <div class="product__more">Открыть раздел <span>→</span></div>
+        </div>
+      </a>
+
+      <a href="#drill" class="product product--drill reveal">
+        <div class="product__head">
+          <span><b>Бланк Д-2</b></span>
+          <span>Поле · Мастер</span>
+        </div>
+        <div class="product__body">
+          <div class="product__icon">🛢</div>
+          <div class="product__role">Буровой журнал</div>
+          <div class="product__title">CoreKit Drill</div>
+          <div class="product__desc">
+            Электронный буровой журнал. Рейсы, тех. режим, промывка, операции,
+            аварии, суточный рапорт мастера. Заменяет бумагу и тетрадь ПВА.
+          </div>
+          <div class="product__more">Открыть раздел <span>→</span></div>
+        </div>
+      </a>
+
+      <a href="#station" class="product product--station reveal">
+        <div class="product__head">
+          <span><b>Бланк С-3</b></span>
+          <span>Офис · Ведущий геолог</span>
+        </div>
+        <div class="product__body">
+          <div class="product__icon">🧭</div>
+          <div class="product__role">Камеральная обработка</div>
+          <div class="product__title">CoreKit Station</div>
+          <div class="product__desc">
+            Реестр, каталог проб, сводная статистика, верификация, проверка участка,
+            отчёты A4, полевой журнал-разворот и геологическая колонка.
+          </div>
+          <div class="product__more">Открыть раздел <span>→</span></div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- GEO -->
+<section class="sticky-section" id="geo">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__head">
+          <span><b>Фототаблица 1</b></span>
+          <span class="file">geo.html</span>
+        </div>
+        <div class="visual-frame__stack" id="geoFrameStack">
+          <img src="screenshots/geo-lithology.png" alt="CoreKit Geo — вкладка Литология" data-scene="0" data-failed="0">
+          <img src="screenshots/geo-dashboard.png" alt="CoreKit Geo — Дашборд скважины" data-scene="1" data-failed="0">
+          <img src="screenshots/geo-samples.png" alt="CoreKit Geo — Опробование" data-scene="2" data-failed="0">
+          <img src="screenshots/geo-validation.png" alt="CoreKit Geo — Валидация данных" data-scene="3" data-failed="0">
+          <div class="visual-frame__ph">
+            <b>Скриншоты не подгружены</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>geo-lithology.png</code>
+            <code>geo-dashboard.png</code>
+            <code>geo-samples.png</code>
+            <code>geo-validation.png</code>
+          </div>
+        </div>
+        <div class="visual-frame__label">
+          <span id="geoFrameLabel">Литология</span>
+          <span class="visual-frame__zoom">🔍 Увеличить</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--geo" data-scene="0">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 1.1</span>
+          <span class="sticky-step__chapter">Раздел Geo</span>
+        </div>
+        <h3 class="sticky-step__title">Полный цикл документации керна</h3>
+        <p class="sticky-step__text">
+          Все разделы в одной программе, в привычной последовательности.
+          Работает оффлайн, на планшете и на ноутбуке. Данные не теряются.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Паспорт, конструкция, координаты X/Y/Z, азимут, угол, персонал</li>
+          <li>Литология: порода, структура, текстура, цвет, оттенок, выветривание, контакт</li>
+          <li>Тектоника, элементы залегания, трещиноватость, прожилки, метасоматоз, руда</li>
+          <li>Опробование с пакетным вводом и авто-привязкой литологии</li>
+          <li>Керновые ящики и буровые рейсы с расчётом выхода керна и RQD</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="1">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 1.2</span>
+          <span class="sticky-step__chapter">Раздел Geo</span>
+        </div>
+        <h3 class="sticky-step__title">Дашборд скважины в реальном времени</h3>
+        <p class="sticky-step__text">
+          Живая аналитика по скважине: сколько пробурено, средний выход керна,
+          RQD, распределение по породам, кривая выхода и RQD по глубине.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Метрики: проходка, выход керна, RQD, глубина факт/план</li>
+          <li>Кривая выхода керна и RQD — визуально видно проблемные интервалы</li>
+          <li>Распределение по породам с процентами и метражом</li>
+          <li>Список рудных интервалов с минералом, количеством и размером</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="2">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 1.3</span>
+          <span class="sticky-step__chapter">Раздел Geo</span>
+        </div>
+        <h3 class="sticky-step__title">Опробование и сводное описание</h3>
+        <p class="sticky-step__text">
+          Пакетное создание проб одной кнопкой, авто-привязка литологии к каждой пробе,
+          сборка полного текстового описания интервала из всех разделов.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Пакетный ввод: 10, 100, 1000 проб за один клик</li>
+          <li>Авто-привязка литологии по максимальному перекрытию</li>
+          <li>Сводное описание собирается автоматически из всех разделов</li>
+          <li>Ручные правки описания сохраняются при изменении исходных данных</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="3">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 1.4</span>
+          <span class="sticky-step__chapter">Раздел Geo</span>
+        </div>
+        <h3 class="sticky-step__title">Живая валидация прямо у ящика</h3>
+        <p class="sticky-step__text">
+          Программа проверяет данные по мере ввода — задолго до офиса. Ошибки
+          подсвечиваются прямо в таблице, замечания собираются в отдельное окно.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Пересечения и разрывы интервалов литологии, тектоники, руды</li>
+          <li>Выход за фактическую глубину скважины, отрицательные значения</li>
+          <li>Дубликаты номеров проб и керновых ящиков</li>
+          <li>Керн больше пробуренного, RQD больше выхода керна</li>
+          <li>Противоречия в датах, пустые обязательные поля паспорта</li>
+          <li>Кнопка «Проверить» с полным отчётом по категориям: ошибки и замечания</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DRILL -->
+<section class="sticky-section" id="drill">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__head">
+          <span><b>Фототаблица 2</b></span>
+          <span class="file">drill.html</span>
+        </div>
+        <div class="visual-frame__stack" id="drillFrameStack">
+          <img src="screenshots/drill-runs.png" alt="CoreKit Drill — вкладка Рейсы" data-scene="0" data-failed="0">
+          <img src="screenshots/drill-run-card.png" alt="CoreKit Drill — карточка рейса" data-scene="1" data-failed="0">
+          <img src="screenshots/drill-dashboard.png" alt="CoreKit Drill — Дашборд проходки" data-scene="2" data-failed="0">
+          <div class="visual-frame__ph">
+            <b>Скриншоты не подгружены</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>drill-runs.png</code>
+            <code>drill-run-card.png</code>
+            <code>drill-dashboard.png</code>
+          </div>
+        </div>
+        <div class="visual-frame__label">
+          <span id="drillFrameLabel">Рейсы</span>
+          <span class="visual-frame__zoom">🔍 Увеличить</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--drill" data-scene="0">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 2.1</span>
+          <span class="sticky-step__chapter">Раздел Drill</span>
+        </div>
+        <h3 class="sticky-step__title">Рейсы и тех. режим по сменам</h3>
+        <p class="sticky-step__text">
+          Электронный буровой журнал мастера. Каждый рейс — дата, смена, интервалы,
+          керн, выход %, наконечник, диаметр, категория по буримости.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Автоматический расчёт проходки, выхода керна и RQD</li>
+          <li>Цветовая индикация выхода керна: норма / внимание / аварийный</li>
+          <li>Цифры прогресса скважины в шапке: «X / Y м (Z%)»</li>
+          <li>Чипы быстрого доступа: комментарии и аварии прямо в строке рейса</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--drill" data-scene="1">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 2.2</span>
+          <span class="sticky-step__chapter">Раздел Drill</span>
+        </div>
+        <h3 class="sticky-step__title">Карточка рейса с операциями</h3>
+        <p class="sticky-step__text">
+          Развёрнутая карточка рейса: интервалы, тех. режим, промывочная жидкость,
+          операции за смену — СПО, замена коронки, обсад, тампонаж, монтаж.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Давление на забой, об/мин, расход промывочной жидкости</li>
+          <li>Уд. вес, вязкость, содержание песка, коэф. фильтрации</li>
+          <li>Чипы операций с быстрым выбором за один клик</li>
+          <li>Копирование тех. режима из предыдущего рейса — для однотипных смен</li>
+          <li>Состав смены, отклонения, состояние оборудования, подписи мастеров</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--drill" data-scene="2">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 2.3</span>
+          <span class="sticky-step__chapter">Раздел Drill</span>
+        </div>
+        <h3 class="sticky-step__title">Комментарии геолога и дашборд</h3>
+        <p class="sticky-step__text">
+          Геолог оставляет комментарии с приоритетом и статусом — мастер видит их
+          прямо в карточке рейса. Дашборд показывает проходку по дням и сменам.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Комментарии с типами: замечание, требование, аварийная, наблюдение</li>
+          <li>Приоритет и статус: открыт / принят / закрыт</li>
+          <li>Столбчатая диаграмма проходки по дням</li>
+          <li>Распределение по сменам I / II / III</li>
+          <li>Реестр аварий и открытые комментарии — одной сводкой</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATION -->
+<section class="sticky-section" id="station">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__head">
+          <span><b>Фототаблица 3</b></span>
+          <span class="file">station.html</span>
+        </div>
+        <div class="visual-frame__stack" id="stationFrameStack">
+          <img src="screenshots/station-registry.png" alt="CoreKit Station — Реестр скважин" data-scene="0" data-failed="0">
+          <img src="screenshots/station-catalog.png" alt="CoreKit Station — Каталог проб и анализов" data-scene="1" data-failed="0">
+          <img src="screenshots/station-stats.png" alt="CoreKit Station — Сводная статистика участка" data-scene="2" data-failed="0">
+          <img src="screenshots/station-verify.png" alt="CoreKit Station — Акт верификации" data-scene="3" data-failed="0">
+          <img src="screenshots/station-check.png" alt="CoreKit Station — Проверка участка" data-scene="4" data-failed="0">
+          <img src="screenshots/station-reports.png" alt="CoreKit Station — Отчёты" data-scene="5" data-failed="0">
+          <div class="visual-frame__ph">
+            <b>Скриншоты не подгружены</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>station-registry.png</code>
+            <code>station-catalog.png</code>
+            <code>station-stats.png</code>
+            <code>station-verify.png</code>
+            <code>station-check.png</code>
+            <code>station-reports.png</code>
+          </div>
+        </div>
+        <div class="visual-frame__label">
+          <span id="stationFrameLabel">Реестр скважин</span>
+          <span class="visual-frame__zoom">🔍 Увеличить</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--station" data-scene="0">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.1</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Реестр скважин участка</h3>
+        <p class="sticky-step__text">
+          Все скважины в одной таблице: номер, статус, глубины, даты, геолог,
+          бурмастер, источник данных. Поиск, фильтры, массовые операции, экспорт в Excel.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Цветные бейджи статусов: проектная / в бурении / задокументирована / верифицирована / сдана</li>
+          <li>Флаги проблем: валидация, просрочка, комментарии верификатора</li>
+          <li>Источник данных: Geo, Drill, Geo+Drill, вручную</li>
+          <li>Массовая верификация партии скважин одним кликом</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="1">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.2</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Каталог проб и анализов</h3>
+        <p class="sticky-step__text">
+          Все пробы со всех скважин в одной таблице. Импорт результатов из CSV
+          лабораторий ALS / SGS / BV. Cut-off по любому элементу с подсветкой аномалий.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Статусы проб: не отправлена / в лаборатории / получены результаты</li>
+          <li>Ручной ввод по 12 элементам, каппаметрия, привязка к партии и накладной</li>
+          <li>Импорт CSV: автоопределение столбца пробы и элементов</li>
+          <li>Cut-off с подсветкой проб выше порога</li>
+          <li>Просроченные пробы: более 30 дней в лаборатории без результата</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="2">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.3</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Сводная статистика участка</h3>
+        <p class="sticky-step__text">
+          Полная аналитика по метражу, породам, метасоматозу и содержаниям.
+          Работает по всем скважинам или только по выделенным в реестре.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Метраж, средний выход керна, средний RQD</li>
+          <li>Распределение по породам, метасоматозу, рудным минералам</li>
+          <li>Статистика по элементам: среднее, медиана, min/max, процентили P10–P90</li>
+          <li>Коэффициент вариации CV с цветовой индикацией разброса</li>
+          <li>QA/QC: контроль соблюдения норм 1:20:1:1</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="3">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.4</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Верификация и акт верификации</h3>
+        <p class="sticky-step__text">
+          Второй уровень контроля после полевой валидации. Чек-лист по каждому
+          разделу скважины, комментарии, подпись. Официальный акт A4 на выходе.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Чек-лист: паспорт, литология, тектоника, руда, метасоматоз, прожилки, опробование</li>
+          <li>Комментарии верификатора с датой и подписью</li>
+          <li>Сброс верификации при импорте новой версии</li>
+          <li>Акт верификации A4: официальный документ с замечаниями и подписями</li>
+          <li>История изменений: кто, когда, что было, что стало — с откатом в один клик</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="4">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.5</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Проверка участка — сквозной контроль</h3>
+        <p class="sticky-step__text">
+          Автоматический поиск проблем не в одной скважине, а по всему участку.
+          Та же логика, что и в Geo, но на уровне проекта целиком.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Критические ошибки скважин и замечания — сводкой по участку</li>
+          <li>Руда без опробования: интервалы с арсенопиритом или золотом без проб</li>
+          <li>Просроченные пробы и пустые результаты у статуса «получены»</li>
+          <li>Неполная верификация: скважина верифицирована, но не все разделы отмечены</li>
+          <li>Отсутствие координат X/Y у скважины</li>
+          <li>Неединообразие справочников: «андезит» и «Андезит» — разные записи</li>
+          <li>Кнопка «Перейти» — прыжок к проблемному полю в карточке скважины</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="5">
+        <div class="sticky-step__head">
+          <span class="sticky-step__num">Пункт 3.6</span>
+          <span class="sticky-step__chapter">Раздел Station</span>
+        </div>
+        <h3 class="sticky-step__title">Отчёты A4 и Excel</h3>
+        <p class="sticky-step__text">
+          Готовые официальные формы для сдачи. Реестры, сводки, справки, акты —
+          в A4-предпросмотре с печатью в PDF или выгрузкой в Excel.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Реестр скважин и реестр с координатами</li>
+          <li>Опись керновых ящиков, реестр буровых рейсов</li>
+          <li>Справка по пробам, сводки по литологии, метасоматозу, руде</li>
+          <li>QA/QC, сводка за период, отчёт по геологам</li>
+          <li>Паспорт участка и акт верификации</li>
+          <li>Экспорт всей скважины в многолистовой Excel одним файлом</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCS -->
+<section class="section" id="docs">
+  <div class="container">
+    <div class="section__head reveal">
+      <div class="section__num">02</div>
+      <div>
+        <div class="section__kicker">Раздел второй · Официальные документы</div>
+        <h2 class="section__title">Полевой журнал<br><em>и геологическая колонка</em></h2>
+      </div>
+      <p class="section__sub">
+        То, что отличает CoreKit от обычных таблиц. Настоящий полевой журнал
+        в формате A3-разворота и геологическая колонка с гибким масштабом —
+        формируются автоматически и сохраняются в PDF.
+      </p>
+    </div>
+
+    <div class="docs-grid">
+      <div class="doc-card reveal">
+        <div class="doc-card__head">
+          <span><b>Образец 1</b></span>
+          <span>Формат A3 · Landscape</span>
+        </div>
+        <div class="doc-card__body">
+          <div class="doc-card__title">📖 Полевой журнал · A3</div>
+          <p class="doc-card__sub">
+            Разворот A3 как в бумажном журнале: слева геологическая колонка с крапом,
+            справа описание и таблица проб с результатами. Единицы переключаются.
+          </p>
+          <div class="doc-card__shot">
+            <img src="screenshots/station-journal.png" alt="Полевой журнал A3" data-failed="0" class="doc-shot-img">
+            <div class="ph">
+              <b>Скриншот не найден</b>
+              <code>screenshots/station-journal.png</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card reveal">
+        <div class="doc-card__head">
+          <span><b>Образец 2</b></span>
+          <span>Формат A4 · Portrait</span>
+        </div>
+        <div class="doc-card__body">
+          <div class="doc-card__title">📊 Геологическая колонка</div>
+          <p class="doc-card__sub">
+            Книжный формат A4/A3. Гибридный масштаб растягивает редкие интервалы
+            под описание, строгий держит линейную шкалу 1:200.
+          </p>
+          <div class="doc-card__shot">
+            <img src="screenshots/station-column.png" alt="Геологическая колонка" data-failed="0" class="doc-shot-img">
+            <div class="ph">
+              <b>Скриншот не найден</b>
+              <code>screenshots/station-column.png</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ХРОНОЛОГИЯ -->
+<section class="section" id="scenario" style="background:var(--paper-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);">
+  <div class="container container--narrow">
+    <div class="section__head reveal" style="grid-template-columns:auto 1fr;">
+      <div class="section__num">03</div>
+      <div>
+        <div class="section__kicker">Раздел третий · Реальный сценарий</div>
+        <h2 class="section__title">Один участок, одна скважина,<br><em>шесть шагов</em></h2>
+      </div>
+    </div>
+
+    <p style="font-size:15.5px;line-height:1.7;color:var(--ink-2);max-width:700px;margin:0 0 40px;font-style:italic;">
+      Как выглядит полный цикл работы с CoreKit на примере скважины DH-104
+      с рудным интервалом 45–62 м.
+    </p>
+
+    <div class="timeline">
+      <div class="timeline__item">
+        <div class="timeline__num">01</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--station">Station · Офис</span>
+          <span class="timeline__date">День 1</span>
+        </div>
+        <h3 class="timeline__title">Проектирование скважины</h3>
+        <p class="timeline__text">
+          Ведущий геолог создаёт DH-104 в реестре Station: координаты, проектную глубину,
+          геологическое задание, назначение. Скважина в статусе «проектная» — ждёт бурения.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">02</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--drill">Drill · Поле</span>
+          <span class="timeline__date">Дни 2–18</span>
+        </div>
+        <h3 class="timeline__title">Бурение и ежедневные рапорты</h3>
+        <p class="timeline__text">
+          Буровой мастер ведёт смены в Drill: заполняет рейсы, тех. режим, промывку,
+          отмечает операции и аварии. В конце смены печатает суточный рапорт A4.
+          Геолог при необходимости оставляет комментарии — мастер видит их сразу.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">03</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--geo">Geo · Поле</span>
+          <span class="timeline__date">Дни 3–20</span>
+        </div>
+        <h3 class="timeline__title">Документация керна и полевая валидация</h3>
+        <p class="timeline__text">
+          Геолог документирует поднятый керн в Geo: литологию, тектонику, прожилки, руду,
+          метасоматоз, опробование. Программа сразу подсвечивает ошибки — пересечения,
+          разрывы, дубликаты, выход за глубину. В конце цикла — автосборка описания.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">04</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--office">Обмен · Флешка / Облако</span>
+          <span class="timeline__date">День 20</span>
+        </div>
+        <h3 class="timeline__title">Передача данных в офис</h3>
+        <p class="timeline__text">
+          Из Drill — файл рейсов «Для геолога». Из Geo — файл .json со всей документацией.
+          Оба сохраняются в облако или на флешку. Никаких серверов, никакой настройки сети.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">05</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--station">Station · Офис</span>
+          <span class="timeline__date">Дни 21–25</span>
+        </div>
+        <h3 class="timeline__title">Импорт, верификация, проверка участка</h3>
+        <p class="timeline__text">
+          Импорт файлов в Station. Автоматически создаются записи в каталоге проб,
+          обновляется реестр. Верификация по разделам, акт верификации A4 или возврат
+          документатору. Далее — сквозная проверка участка: руда без опробования,
+          просроченные пробы, неполная верификация, координаты, единообразие справочников.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">06</div>
+        <div class="timeline__meta">
+          <span class="timeline__tag timeline__tag--station">Station · Офис</span>
+          <span class="timeline__date">Дни 25–30</span>
+        </div>
+        <h3 class="timeline__title">Отчётность и аналитика</h3>
+        <p class="timeline__text">
+          Полевой журнал A3-разворот, геологическая колонка, сводки по литологии
+          и метасоматозу, рудная сводка, справка по пробам. Вся скважина — в Excel
+          многолистовым файлом. Статистика участка обновляется автоматически.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section class="section" id="tech">
+  <div class="container">
+    <div class="section__head reveal">
+      <div class="section__num">04</div>
+      <div>
+        <div class="section__kicker">Раздел четвёртый · Технические условия</div>
+        <h2 class="section__title">Работает везде<br><em>и не подводит</em></h2>
+      </div>
+      <p class="section__sub">
+        В поле, на вахте, в офисе — оффлайн, без сервера, на слабом железе.
+        Данные надёжно сохраняются, версии контролируются.
+      </p>
+    </div>
+
+    <div class="tech-list">
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-01</div>
+        <div class="tech__title">Работает оффлайн</div>
+        <div class="tech__text">Никакого интернета и сервера. Поле, вахта, удалённый участок — везде одинаково.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-02</div>
+        <div class="tech__title">Планшет + ПК</div>
+        <div class="tech__text">Geo и Drill — на планшете. Station — на рабочем ПК. Один формат данных везде.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-03</div>
+        <div class="tech__title">Ничего не теряется</div>
+        <div class="tech__text">Автосохранение каждые секунды, 5 резервных копий, ежедневные снапшоты, откат в один клик.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-04</div>
+        <div class="tech__title">Справочники на ходу</div>
+        <div class="tech__text">Даже в поле — новая порода или минерал в один клик. Сразу во всех выпадающих списках.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-05</div>
+        <div class="tech__title">Крапы под участок</div>
+        <div class="tech__text">Стандартная библиотека + свой крап для каждой породы. Превью, сохранение в проекте.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__num">ТУ-06</div>
+        <div class="tech__title">PDF и Excel везде</div>
+        <div class="tech__text">Печать в PDF с правильными размерами A4/A3. Выгрузка в Excel — без установленного Office.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="contact">
+  <div class="cta__inner reveal">
+    <div class="cta__stamp">Утверждаю</div>
+    <h2>Готовы перевести участок<br>на <em>CoreKit</em>?</h2>
+    <p class="cta__sub">
+      Свяжитесь с разработчиком, чтобы обсудить внедрение, обучение сотрудников
+      или расширение под задачи вашего участка.
+    </p>
+    <div class="cta__row">
+      <a href="mailto:info@corekit.ru" class="btn btn--primary">
+        ✉ Написать нам
+      </a>
+      <a href="#products" class="btn btn--ghost">
+        Вернуться к продуктам
+      </a>
+    </div>
+    <div class="cta__signatures">
+      <div>
+        Ведущий геолог
+        <b>И.И. Иванов</b>
+      </div>
+      <div>
+        Дата составления
+        <b>2026 г.</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer__inner">
+    <div>
+      <div class="footer__brand">Core<span>Kit</span> Suite</div>
+      <p class="footer__desc">
+        Экосистема оффлайн-приложений для геологоразведки: документация керна,
+        буровые журналы, камеральная обработка и отчётность.
+      </p>
+    </div>
+    <div class="footer__col">
+      <h4>Продукты</h4>
+      <ul>
+        <li><a href="#geo">CoreKit Geo</a></li>
+        <li><a href="#drill">CoreKit Drill</a></li>
+        <li><a href="#station">CoreKit Station</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <h4>Разделы</h4>
+      <ul>
+        <li><a href="#docs">Полевой журнал</a></li>
+        <li><a href="#docs">Геологическая колонка</a></li>
+        <li><a href="#scenario">Хронология работ</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <h4>Сведения</h4>
+      <ul>
+        <li><a href="#contact">Связаться</a></li>
+        <li><a href="#">Руководство пользователя</a></li>
+        <li><a href="#">Техническая документация</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span><b>©</b> CoreKit, 2026. Все права защищены.</span>
+    <span>Сайт не использует cookie и не собирает персональные данные.</span>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Наверх">↑</button>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lightbox__caption" id="lightboxCaption"></div>
+  <button class="lightbox__close" id="lightboxClose" aria-label="Закрыть">✕</button>
+  <img class="lightbox__img" id="lightboxImg" alt="">
+  <div class="lightbox__hint">Esc или клик по фону — закрыть</div>
+</div>
+
+<script>
+/* ============================================================
+   PRELOADER
+   ============================================================ */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('preloader').classList.add('is-done');
+    document.documentElement.classList.remove('is-loading');
+
+    const topoSVG = document.getElementById('topoSVG');
+    if(topoSVG) topoSVG.classList.add('is-drawing');
+
+    document.querySelectorAll('.side-contours').forEach(el => {
+      el.classList.add('is-visible');
+    });
+  }, 1300);
+});
+
+/* ============================================================
+   PROGRESS + NAV
+   ============================================================ */
+const progressFill = document.getElementById('progressFill');
+const nav = document.getElementById('nav');
+const navLinks = document.querySelectorAll('.nav__menu a[href^="#"]');
+const sections = [...document.querySelectorAll('section[id]')];
+
+function updateScroll(){
+  const h = document.documentElement;
+  const scrolled = h.scrollTop;
+  const total = h.scrollHeight - h.clientHeight;
+  const pct = total > 0 ? (scrolled / total) * 100 : 0;
+  progressFill.style.width = pct + '%';
+
+  if(window.scrollY > 40) nav.classList.add('is-scrolled');
+  else nav.classList.remove('is-scrolled');
+
+  let current = '';
+  sections.forEach(s => {
+    const top = s.offsetTop - 140;
+    if(window.scrollY >= top) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('is-active', a.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', updateScroll, {passive: true});
+updateScroll();
+
+/* ============================================================
+   TO TOP
+   ============================================================ */
+const toTop = document.getElementById('toTop');
+window.addEventListener('scroll', () => {
+  toTop.classList.toggle('is-visible', window.scrollY > 800);
+}, {passive: true});
+toTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+
+/* ============================================================
+   REVEAL
+   ============================================================ */
+const revealIO = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('is-visible');
+      revealIO.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.1, rootMargin: '0px 0px -50px 0px'});
+document.querySelectorAll('.reveal, .timeline__item').forEach(el => revealIO.observe(el));
+
+/* ============================================================
+   COUNTERS
+   ============================================================ */
+const counterIO = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    counterIO.unobserve(e.target);
+    const el = e.target;
+    const target = parseFloat(el.dataset.count);
+    const duration = 1600;
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const start = performance.now();
+    (function tick(now){
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 4);
+      const val = target * eased;
+      const display = target % 1 === 0 ? Math.round(val) : val.toFixed(1);
+      el.innerHTML = prefix + display + suffix;
+      if(t < 1) requestAnimationFrame(tick);
+      else el.innerHTML = prefix + target + suffix;
+    })(start);
+  });
+}, {threshold: 0.4});
+document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
+
+/* ============================================================
+   STRIP
+   ============================================================ */
+const stripTrack = document.getElementById('stripTrack');
+const stripItems = [
+  'Оффлайн', 'Без сервера', 'Планшет и ПК', 'Обмен JSON',
+  'Полевой журнал A3', 'Геологическая колонка',
+  'Валидация', 'Верификация', 'Проверка участка',
+  'Каталог проб', 'Импорт CSV лаборатории', 'Cut-off',
+  'Справочники на ходу', 'Крапы пород', 'PDF и Excel',
+  'Лист 1 из 15', 'Масштаб 1:5 000', 'СК-42'
+];
+const stripHTML = stripItems.map(t => `<span class="strip__item">${t}</span>`).join('');
+stripTrack.innerHTML = stripHTML + stripHTML;
+
+/* ============================================================
+   STICKY SHOWCASE
+   ============================================================ */
+function setupStickyShowcase(stackId, stepsSelector, labelId, frameLabels){
+  const frameStack = document.getElementById(stackId);
+  if(!frameStack) return;
+  const frameImgs = frameStack.querySelectorAll('img');
+  const frameLabel = document.getElementById(labelId);
+
+  frameImgs.forEach(img => {
+    img.addEventListener('load', () => {
+      img.dataset.failed = '0';
+      frameStack.classList.add('has-loaded');
+    });
+    img.addEventListener('error', () => {
+      img.dataset.failed = '1';
+      img.style.display = 'none';
+    });
+    if(img.complete){
+      if(img.naturalWidth === 0){
+        img.dataset.failed = '1';
+        img.style.display = 'none';
+      } else {
+        img.dataset.failed = '0';
+        frameStack.classList.add('has-loaded');
+      }
+    }
+  });
+
+  const steps = document.querySelectorAll(stepsSelector);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      const idx = parseInt(e.target.dataset.scene, 10);
+      if(e.isIntersecting){
+        frameImgs.forEach((img, i) => {
+          const isActive = i === idx;
+          const isBroken = img.dataset.failed === '1';
+          img.classList.toggle('is-active', isActive && !isBroken);
+        });
+        if(frameLabels && frameLabels[idx] && frameLabel){
+          frameLabel.textContent = frameLabels[idx];
+        }
+      }
+    });
+  }, {threshold: 0.55, rootMargin: '-25% 0px -30% 0px'});
+  steps.forEach(s => io.observe(s));
+}
+
+setupStickyShowcase(
+  'geoFrameStack',
+  '#geo .sticky-step',
+  'geoFrameLabel',
+  ['Литология', 'Дашборд', 'Опробование', 'Валидация']
+);
+
+setupStickyShowcase(
+  'drillFrameStack',
+  '#drill .sticky-step',
+  'drillFrameLabel',
+  ['Рейсы', 'Карточка рейса', 'Дашборд']
+);
+
+setupStickyShowcase(
+  'stationFrameStack',
+  '#station .sticky-step',
+  'stationFrameLabel',
+  ['Реестр скважин', 'Каталог проб', 'Статистика участка', 'Акт верификации', 'Проверка участка', 'Отчёты']
+);
+
+/* ============================================================
+   FALLBACK документов
+   ============================================================ */
+document.querySelectorAll('.doc-shot-img').forEach(img => {
+  const showPlaceholder = () => {
+    img.style.display = 'none';
+    const ph = img.nextElementSibling;
+    if(ph && ph.classList.contains('ph')) ph.classList.add('is-show');
+  };
+  img.addEventListener('error', showPlaceholder);
+  if(img.complete && img.naturalWidth === 0) showPlaceholder();
+});
+
+/* ============================================================
+   LIGHTBOX
+   ============================================================ */
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+const lightboxCaption = document.getElementById('lightboxCaption');
+const lightboxClose = document.getElementById('lightboxClose');
+
+function openLightbox(src, caption){
+  if(!src) return;
+  lightboxImg.src = src;
+  lightboxCaption.textContent = caption || '';
+  lightbox.classList.add('is-open');
+  lightbox.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(){
+  lightbox.classList.remove('is-open');
+  lightbox.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  setTimeout(() => { lightboxImg.src = ''; }, 400);
+}
+
+document.querySelectorAll('.visual-frame__stack, .doc-card__shot').forEach(container => {
+  container.addEventListener('click', e => {
+    const img = container.querySelector('img.is-active')
+             || container.querySelector('img:not([data-failed="1"])');
+    if(!img) return;
+    if(img.dataset.failed === '1') return;
+    if(img.complete && img.naturalWidth === 0) return;
+    if(!img.src) return;
+    if(img.style.display === 'none') return;
+    e.preventDefault();
+    openLightbox(img.src, img.alt || 'CoreKit');
+  });
+});
+
+lightbox.addEventListener('click', e => {
+  if(e.target === lightboxImg) return;
+  closeLightbox();
+});
+lightboxClose.addEventListener('click', e => {
+  e.stopPropagation();
+  closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && lightbox.classList.contains('is-open')){
+    closeLightbox();
+  }
+});
+
+/* ============================================================
+   SMOOTH SCROLL
+   ============================================================ */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if(href === '#') return;
+    const target = document.querySelector(href);
+    if(!target) return;
+    e.preventDefault();
+    const y = target.getBoundingClientRect().top + window.scrollY - 90;
+    window.scrollTo({top: y, behavior: 'smooth'});
+  });
+});
+
+/* ============================================================
+   ПАРАЛЛАКС
+   ============================================================ */
+const topoLayer = document.querySelector('.hero__map');
+if(topoLayer){
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if(y > window.innerHeight * 1.5) return;
+    topoLayer.style.transform = `translateY(${y * 0.2}px)`;
+  }, {passive: true});
+}
+</script>
+</body>
+</html>
