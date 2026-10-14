@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoreKit Suite — геологическая экосистема</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#050810;
+    --bg-2:#0a0e1a;
+    --line:rgba(255,255,255,.08);
+    --line-2:rgba(125,211,252,.18);
+    --text:#e8eefc;
+    --muted:#8b9bc4;
+    --dim:#5a6890;
+    --cyan:#7dd3fc;
+    --cyan-2:#22d3ee;
+    --purple:#a78bfa;
+    --grad-main:linear-gradient(135deg,#7dd3fc,#22d3ee 40%,#a78bfa);
+  }
+  html{scroll-behavior:smooth;}
+  html.is-loading{overflow:hidden;}
+  body{
+    font-family:"Inter","SF Pro Display",-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.6;
+    color:var(--text);
+    background:var(--bg);
+    overflow-x:hidden;
+    overflow-x:clip;
+    -webkit-font-smoothing:antialiased;
+    cursor:none;
+  }
+  body.is-touch{cursor:auto;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  button{font-family:inherit;border:none;background:none;cursor:none;color:inherit;}
+  body.is-touch button,body.is-touch a{cursor:pointer;}
+
+  /* ============================================================
+     ФОНОВАЯ СЕТКА
+     ============================================================ */
+  .page-grid{
+    position:fixed;inset:0;z-index:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(rgba(125,211,252,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125,211,252,.03) 1px, transparent 1px),
+      linear-gradient(rgba(125,211,252,.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125,211,252,.015) 1px, transparent 1px);
+    background-size:120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 90%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 90%);
+  }
+
+  /* ============================================================
+     БОКОВЫЕ ИЗОЛИНИИ — fixed, видны на всём скролле
+     ============================================================ */
+  .side-contours{
+    position:fixed;
+    top:0;bottom:0;
+    width:clamp(180px, 15vw, 320px);
+    z-index:1;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 2.5s cubic-bezier(.7,0,.3,1);
+    overflow:hidden;
+    mask-image:linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  }
+  .side-contours.is-visible{opacity:1;}
+  .side-contours--left{left:0;}
+  .side-contours--right{right:0;}
+  .side-contours svg{
+    width:100%;height:220%;
+    position:absolute;
+    top:-60%;
+    left:0;
+    animation:driftContours 90s linear infinite;
+  }
+  .side-contours--right svg{
+    transform:scaleX(-1);
+  }
+  @keyframes driftContours{
+    from{translate:0 0;}
+    to{translate:0 -25%;}
+  }
+  .side-contour{
+    fill:none;
+    stroke:var(--cyan);
+    stroke-width:.8;
+    stroke-opacity:.22;
+  }
+  .side-contour--accent{stroke:var(--purple);stroke-opacity:.26;}
+  .side-contour--dense{stroke-opacity:.12;stroke-width:.6;}
+  @media(max-width:1280px){
+    .side-contours{display:none;}
+  }
+
+  /* ============================================================
+     PRELOADER
+     ============================================================ */
+  .preloader{
+    position:fixed;inset:0;z-index:9999;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px;
+    transition:opacity .8s cubic-bezier(.7,0,.3,1),visibility .8s;
+  }
+  .preloader.is-done{opacity:0;visibility:hidden;}
+  .preloader__mark{
+    font-size:64px;font-weight:900;letter-spacing:-3px;
+    background:var(--grad-main);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:markIn 1.2s cubic-bezier(.7,0,.3,1) both;
+  }
+  @keyframes markIn{
+    0%{opacity:0;transform:translateY(30px) scale(.9);filter:blur(20px);}
+    100%{opacity:1;transform:none;filter:none;}
+  }
+  .preloader__bar{
+    width:200px;height:2px;background:rgba(255,255,255,.1);
+    border-radius:2px;overflow:hidden;position:relative;
+  }
+  .preloader__bar::after{
+    content:"";position:absolute;inset:0;
+    background:var(--grad-main);
+    transform:translateX(-100%);
+    animation:loadBar 1.6s cubic-bezier(.7,0,.3,1) infinite;
+  }
+  @keyframes loadBar{
+    0%{transform:translateX(-100%);}
+    50%{transform:translateX(0);}
+    100%{transform:translateX(100%);}
+  }
+
+  /* ============================================================
+     CURSOR
+     ============================================================ */
+  .cursor{
+    position:fixed;top:0;left:0;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--cyan);
+    pointer-events:none;z-index:10000;
+    mix-blend-mode:difference;
+    transition:transform .15s cubic-bezier(.7,0,.3,1),width .3s,height .3s;
+    transform:translate(-50%,-50%);
+  }
+  .cursor__ring{
+    position:fixed;top:0;left:0;
+    width:40px;height:40px;border-radius:50%;
+    border:1.5px solid rgba(125,211,252,.5);
+    pointer-events:none;z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:width .35s cubic-bezier(.7,0,.3,1),height .35s cubic-bezier(.7,0,.3,1),border-color .35s,background .35s;
+  }
+  .cursor.is-hover,.cursor__ring.is-hover{width:60px;height:60px;}
+  .cursor__ring.is-hover{
+    background:rgba(125,211,252,.1);
+    border-color:var(--cyan);
+  }
+  @media(max-width:1024px){
+    .cursor,.cursor__ring{display:none;}
+    body{cursor:auto;}
+    button,a{cursor:pointer;}
+  }
+
+  /* ============================================================
+     PROGRESS + NAV
+     ============================================================ */
+  .progress-bar{
+    position:fixed;top:0;left:0;right:0;height:2px;
+    z-index:200;background:transparent;
+  }
+  .progress-bar__fill{
+    height:100%;width:0;
+    background:var(--grad-main);
+    box-shadow:0 0 20px rgba(125,211,252,.8);
+    transition:width .08s linear;
+  }
+
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:150;
+    padding:22px 40px;
+    display:flex;align-items:center;gap:24px;
+    transition:all .4s cubic-bezier(.7,0,.3,1);
+  }
+  .nav.is-scrolled{
+    padding:14px 40px;
+    background:rgba(5,8,16,.75);
+    backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid var(--line);
+  }
+  .nav__logo{
+    display:flex;align-items:center;gap:12px;
+    font-weight:800;font-size:17px;letter-spacing:-.3px;
+  }
+  .nav__logo-mark{
+    width:34px;height:34px;border-radius:10px;
+    background:var(--grad-main);
+    display:grid;place-items:center;
+    font-size:17px;
+    box-shadow:0 8px 24px rgba(125,211,252,.35);
+    transition:transform .5s cubic-bezier(.7,0,.3,1);
+    position:relative;overflow:hidden;
+  }
+  .nav__logo-mark::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.5) 50%,transparent 60%);
+    transform:translateX(-100%);
+    transition:transform .8s ease;
+  }
+  .nav__logo:hover .nav__logo-mark{transform:rotate(-10deg) scale(1.1);}
+  .nav__logo:hover .nav__logo-mark::before{transform:translateX(100%);}
+  .nav__logo span{color:var(--cyan);}
+  .nav__menu{
+    margin-left:auto;display:flex;gap:4px;align-items:center;
+  }
+  .nav__menu a{
+    padding:9px 16px;border-radius:10px;
+    font-size:14px;font-weight:500;
+    color:var(--muted);
+    transition:all .3s cubic-bezier(.7,0,.3,1);
+    position:relative;
+  }
+  .nav__menu a:hover{color:var(--text);background:rgba(255,255,255,.06);}
+  .nav__menu a.is-active::after{
+    content:"";position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+    width:4px;height:4px;border-radius:50%;background:var(--cyan);
+  }
+  .nav__cta{
+    background:var(--grad-main)!important;
+    color:var(--bg)!important;
+    font-weight:700!important;
+    margin-left:8px;
+    box-shadow:0 4px 20px rgba(125,211,252,.35);
+  }
+  @media(max-width:900px){
+    .nav,.nav.is-scrolled{padding:14px 20px;}
+    .nav__menu a:not(.nav__cta){display:none;}
+  }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero{
+    position:relative;min-height:100vh;
+    padding:140px 40px 80px;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    isolation:isolate;
+    z-index:1;
+    background:radial-gradient(ellipse at 50% 40%, #0d1e3d 0%, #050810 55%);
+  }
+  .topo-layer{
+    position:absolute;inset:0;
+    z-index:0;pointer-events:none;
+    overflow:hidden;
+  }
+  .topo-layer svg{
+    position:absolute;top:50%;left:50%;
+    width:160%;height:160%;
+    transform:translate(-50%,-50%);
+    min-width:1400px;min-height:900px;
+  }
+  .topo-contour{
+    fill:none;
+    stroke:var(--cyan);
+    stroke-width:.7;
+    stroke-opacity:.14;
+    stroke-dasharray:1;
+    stroke-dashoffset:1;
+  }
+  .topo-layer svg.is-drawing .topo-contour{
+    animation:drawContour 3.2s cubic-bezier(.65,0,.35,1) forwards;
+  }
+  @keyframes drawContour{
+    from{stroke-dashoffset:1;}
+    to{stroke-dashoffset:0;}
+  }
+  .topo-contour--accent{stroke:var(--purple);stroke-opacity:.18;stroke-width:.9;}
+  .topo-contour--dense{stroke-opacity:.07;stroke-width:.5;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(1){animation-delay:.15s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(2){animation-delay:.30s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(3){animation-delay:.45s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(4){animation-delay:.60s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(5){animation-delay:.75s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(6){animation-delay:.90s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(7){animation-delay:1.05s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(8){animation-delay:1.20s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(9){animation-delay:1.35s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(10){animation-delay:1.50s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(11){animation-delay:1.65s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(12){animation-delay:1.80s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(13){animation-delay:1.95s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(14){animation-delay:2.10s;}
+  .topo-layer svg.is-drawing .topo-contour:nth-child(15){animation-delay:2.25s;}
+
+  .coord-layer{
+    position:absolute;inset:0;z-index:1;
+    pointer-events:none;overflow:hidden;
+  }
+  .coord-layer::before{
+    content:"";
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(125,211,252,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125,211,252,.06) 1px, transparent 1px);
+    background-size:100px 100px;
+    mask-image:radial-gradient(ellipse at 50% 50%,#000 20%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 20%,transparent 75%);
+  }
+  .coord-tick{
+    position:absolute;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:10px;color:var(--cyan);
+    opacity:.35;letter-spacing:1px;
+    pointer-events:none;font-weight:600;
+  }
+  .coord-tick--x{top:50%;transform:translateY(-50%);}
+  .coord-tick--y{left:50%;transform:translateX(-50%);}
+
+  .drill-layer{
+    position:absolute;inset:0;z-index:2;
+    pointer-events:none;
+  }
+  .drill-marker{
+    position:absolute;
+    display:flex;align-items:center;gap:8px;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:10.5px;color:var(--cyan);
+    font-weight:700;letter-spacing:.5px;
+    opacity:0;
+    animation:markerIn 1.4s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  .drill-marker__dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 0 3px rgba(125,211,252,.2),0 0 14px rgba(125,211,252,.8);
+    position:relative;flex-shrink:0;
+  }
+  .drill-marker__dot::after{
+    content:"";position:absolute;inset:-6px;
+    border-radius:50%;border:1px solid var(--cyan);
+    opacity:0;
+    animation:ringPulse 2.8s ease-out infinite;
+  }
+  .drill-marker__label{
+    background:rgba(5,8,16,.6);
+    border:1px solid rgba(125,211,252,.25);
+    padding:3px 8px;border-radius:5px;
+    backdrop-filter:blur(6px);white-space:nowrap;
+  }
+  .drill-marker__depth{color:var(--dim);font-weight:500;margin-left:2px;}
+  @keyframes markerIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes ringPulse{
+    0%{transform:scale(.9);opacity:.8;}
+    100%{transform:scale(2.2);opacity:0;}
+  }
+  .drill-marker:nth-child(1){animation-delay:1.6s;top:32%;left:18%;}
+  .drill-marker:nth-child(2){animation-delay:1.8s;top:64%;left:26%;}
+  .drill-marker:nth-child(3){animation-delay:2.0s;top:44%;left:78%;}
+  .drill-marker:nth-child(4){animation-delay:2.2s;top:74%;left:72%;}
+  .drill-marker:nth-child(5){animation-delay:2.4s;top:22%;left:62%;}
+
+  .compass{
+    position:absolute;bottom:48px;right:48px;
+    width:96px;height:96px;z-index:3;
+    pointer-events:none;opacity:0;
+    animation:fadeIn 1.5s 1.6s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  .compass svg{
+    width:100%;height:100%;
+    animation:compassSway 8s ease-in-out infinite;
+    transform-origin:center;
+  }
+  @keyframes compassSway{
+    0%,100%{transform:rotate(-3deg);}
+    50%{transform:rotate(3deg);}
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @media(max-width:900px){
+    .compass{width:64px;height:64px;bottom:24px;right:24px;}
+  }
+
+  .scale-bar{
+    position:absolute;bottom:56px;left:48px;
+    z-index:3;pointer-events:none;opacity:0;
+    animation:fadeIn 1.5s 1.8s cubic-bezier(.7,0,.3,1) forwards;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:10px;color:var(--cyan);
+    letter-spacing:1px;font-weight:600;
+  }
+  .scale-bar__label{margin-bottom:6px;opacity:.7;}
+  .scale-bar__ruler{
+    display:flex;align-items:flex-end;gap:0;height:14px;
+  }
+  .scale-bar__seg{
+    width:24px;height:100%;
+    border:1px solid var(--cyan);border-right:none;
+    background:transparent;position:relative;opacity:.8;
+  }
+  .scale-bar__seg:last-child{border-right:1px solid var(--cyan);}
+  .scale-bar__seg:nth-child(odd){background:rgba(125,211,252,.15);}
+  .scale-bar__seg::after{
+    content:attr(data-label);
+    position:absolute;bottom:-16px;left:0;
+    font-size:9px;opacity:.7;transform:translateX(-50%);
+  }
+  @media(max-width:900px){
+    .scale-bar{bottom:24px;left:20px;}
+    .scale-bar__seg{width:16px;}
+  }
+
+  .map-corner{
+    position:absolute;z-index:3;pointer-events:none;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:10.5px;color:var(--cyan);
+    opacity:.55;letter-spacing:1px;font-weight:600;
+    padding:8px 12px;
+    border:1px solid rgba(125,211,252,.15);
+    border-radius:6px;
+    background:rgba(5,8,16,.5);
+    backdrop-filter:blur(6px);
+  }
+  .map-corner::before{
+    content:"";
+    display:inline-block;
+    width:6px;height:6px;
+    border-left:1px solid var(--cyan);
+    border-top:1px solid var(--cyan);
+    margin-right:8px;vertical-align:middle;opacity:.7;
+  }
+  .map-corner--tl{top:80px;left:24px;}
+  .map-corner--tr{top:80px;right:24px;}
+  .map-corner--bl{bottom:180px;left:24px;}
+  .map-corner--br{bottom:180px;right:24px;}
+  .map-corner--tr::before,.map-corner--br::before{
+    border-left:none;border-right:1px solid var(--cyan);
+  }
+  .map-corner--bl::before,.map-corner--br::before{
+    border-top:none;border-bottom:1px solid var(--cyan);
+  }
+  @media(max-width:900px){.map-corner{display:none;}}
+
+  .hero__inner{
+    position:relative;z-index:5;
+    max-width:1200px;width:100%;
+    text-align:center;
+  }
+  .hero__eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:8px 18px;border-radius:30px;
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line-2);
+    color:var(--cyan);
+    font-size:12px;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:32px;
+    backdrop-filter:blur(10px);
+    animation:fadeUp .8s .2s cubic-bezier(.7,0,.3,1) both;
+  }
+  .hero__eyebrow::before{
+    content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--cyan-2);
+    box-shadow:0 0 14px var(--cyan-2);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.6);}}
+
+  .hero__title{
+    font-size:clamp(42px,8vw,110px);
+    line-height:.96;font-weight:900;
+    letter-spacing:-4px;margin:0 0 32px;
+    text-shadow:0 0 80px rgba(5,8,16,.9);
+  }
+  .hero__title-line{display:block;overflow:hidden;padding:0 .1em;}
+  .hero__title-line > span{
+    display:inline-block;
+    animation:lineUp 1.1s cubic-bezier(.7,0,.3,1) both;
+  }
+  .hero__title-line:nth-child(1) > span{animation-delay:.4s;}
+  .hero__title-line:nth-child(2) > span{animation-delay:.55s;}
+  .hero__title-line:nth-child(3) > span{animation-delay:.7s;}
+  @keyframes lineUp{
+    0%{transform:translateY(110%);opacity:0;}
+    100%{transform:none;opacity:1;}
+  }
+  .hero__title .grad{
+    background:var(--grad-main);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    background-size:200% 100%;
+    animation:gradShift 6s ease infinite;
+  }
+  @keyframes gradShift{
+    0%,100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+  .hero__title .outline{
+    -webkit-text-stroke:1.5px rgba(125,211,252,.5);
+    color:transparent;
+  }
+  .hero__sub{
+    font-size:clamp(16px,1.8vw,20px);
+    line-height:1.55;
+    max-width:640px;margin:0 auto 44px;
+    color:var(--muted);
+    animation:fadeUp 1s .9s cubic-bezier(.7,0,.3,1) both;
+  }
+  .hero__actions{
+    display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+    animation:fadeUp 1s 1.05s cubic-bezier(.7,0,.3,1) both;
+  }
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(30px);}
+    to{opacity:1;transform:none;}
+  }
+
+  .btn{
+    position:relative;
+    display:inline-flex;align-items:center;gap:10px;
+    padding:16px 32px;border-radius:14px;
+    font-size:15px;font-weight:700;
+    letter-spacing:.2px;
+    transition:transform .35s cubic-bezier(.7,0,.3,1), box-shadow .35s;
+    overflow:hidden;will-change:transform;
+  }
+  .btn--primary{
+    background:var(--grad-main);
+    color:var(--bg);
+    box-shadow:0 12px 40px rgba(125,211,252,.4);
+  }
+  .btn--primary:hover{box-shadow:0 20px 60px rgba(125,211,252,.6);}
+  .btn--primary::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);
+    transform:translateX(-100%);
+    transition:transform .8s ease;
+  }
+  .btn--primary:hover::before{transform:translateX(100%);}
+  .btn--ghost{
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    border:1px solid var(--line-2);
+    backdrop-filter:blur(10px);
+  }
+  .btn--ghost:hover{
+    background:rgba(125,211,252,.1);
+    border-color:var(--cyan);
+  }
+  .btn__ico{transition:transform .4s cubic-bezier(.7,0,.3,1);}
+  .btn:hover .btn__ico{transform:translateX(4px);}
+
+  .hero__scroll{
+    position:absolute;bottom:36px;left:50%;
+    transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    color:var(--dim);font-size:10.5px;
+    letter-spacing:3px;text-transform:uppercase;font-weight:700;
+    z-index:5;
+    animation:fadeUp 1s 1.4s both;
+  }
+  .hero__scroll-line{
+    width:1px;height:44px;background:linear-gradient(to bottom,var(--cyan),transparent);
+    position:relative;overflow:hidden;
+  }
+  .hero__scroll-line::after{
+    content:"";position:absolute;top:0;left:0;width:100%;height:20px;
+    background:var(--cyan);
+    animation:scrollDrop 2s cubic-bezier(.7,0,.3,1) infinite;
+  }
+  @keyframes scrollDrop{
+    0%{transform:translateY(-100%);}
+    100%{transform:translateY(220%);}
+  }
+
+  /* ============================================================
+     MARQUEE — фон полупрозрачный
+     ============================================================ */
+  .marquee{
+    padding:32px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;white-space:nowrap;
+    background:rgba(10,14,26,.45);
+    position:relative;
+    z-index:2;
+  }
+  .marquee::before,.marquee::after{
+    content:"";
+    position:absolute;top:0;bottom:0;width:120px;
+    z-index:2;pointer-events:none;
+  }
+  .marquee::before{
+    left:0;
+    background:linear-gradient(to right,rgba(5,8,16,.85),transparent);
+  }
+  .marquee::after{
+    right:0;
+    background:linear-gradient(to left,rgba(5,8,16,.85),transparent);
+  }
+  .marquee__track{
+    display:inline-flex;
+    animation:marquee 40s linear infinite;
+  }
+  .marquee__item{
+    display:inline-flex;align-items:center;gap:32px;
+    padding:0 32px;
+    font-size:24px;font-weight:800;
+    letter-spacing:-.5px;
+    color:rgba(232,238,252,.15);
+    text-transform:uppercase;
+  }
+  .marquee__item::after{content:"◆";color:var(--cyan);font-size:14px;}
+  @keyframes marquee{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+  @media(max-width:640px){
+    .marquee__item{font-size:18px;padding:0 20px;gap:20px;}
+  }
+
+  /* ============================================================
+     РАЗРЕЗ-РАЗДЕЛИТЕЛЬ
+     ============================================================ */
+  .strata-divider{
+    position:relative;height:52px;overflow:hidden;
+    pointer-events:none;z-index:2;
+  }
+  .strata-divider svg{width:100%;height:100%;display:block;}
+  .strata-divider--flip svg{transform:scaleY(-1);}
+
+  /* ============================================================
+     СЕКЦИИ — фон полупрозрачный, чтобы изолинии просвечивали
+     ============================================================ */
+  .section{
+    padding:140px 40px;
+    position:relative;
+    z-index:2;
+  }
+  @media(max-width:900px){.section{padding:80px 24px;}}
+  .container{max-width:1280px;margin:0 auto;width:100%;}
+  .container--narrow{max-width:960px;}
+
+  .label{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:11.5px;font-weight:700;
+    letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--cyan);margin-bottom:20px;
+  }
+  .label::before{content:"";width:24px;height:1px;background:var(--cyan);}
+  h2{
+    font-size:clamp(32px,5vw,64px);
+    line-height:1.05;letter-spacing:-1.5px;
+    font-weight:900;margin:0 0 24px;
+  }
+  h2 .grad{
+    background:var(--grad-main);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  h2 .outline{
+    -webkit-text-stroke:1.5px rgba(125,211,252,.4);
+    color:transparent;
+  }
+  .lead{
+    font-size:clamp(16px,1.7vw,19px);
+    line-height:1.6;color:var(--muted);
+    max-width:720px;margin:0 0 60px;
+  }
+
+  .reveal{
+    opacity:0;transform:translateY(60px);
+    transition:opacity 1.1s cubic-bezier(.7,0,.3,1), transform 1.1s cubic-bezier(.7,0,.3,1);
+  }
+  .reveal.is-visible{opacity:1;transform:none;}
+  .reveal-d1{transition-delay:.1s;}
+  .reveal-d2{transition-delay:.2s;}
+  .reveal-d3{transition-delay:.3s;}
+
+  /* ============================================================
+     STATS — полупрозрачный фон
+     ============================================================ */
+  .stats{
+    padding:100px 40px;
+    background:rgba(10,14,26,.45);
+    position:relative;overflow:hidden;z-index:2;
+  }
+  .stats::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at 20% 30%, rgba(125,211,252,.06), transparent 60%),
+               radial-gradient(ellipse at 80% 70%, rgba(167,139,250,.05), transparent 60%);
+    pointer-events:none;
+  }
+  .stats__grid{
+    position:relative;max-width:1280px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:1px;background:var(--line);
+    border-radius:20px;overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .stat{
+    padding:48px 32px;background:rgba(5,8,16,.6);
+    text-align:center;position:relative;overflow:hidden;
+    transition:background .5s;
+  }
+  .stat::before{
+    content:"";position:absolute;
+    top:-50%;left:-50%;width:200%;height:200%;
+    background:radial-gradient(circle,var(--cyan) 0%,transparent 40%);
+    opacity:0;transition:opacity .6s;pointer-events:none;
+  }
+  .stat:hover{background:rgba(10,14,26,.85);}
+  .stat:hover::before{opacity:.08;}
+  .stat__value{
+    font-size:clamp(36px,5vw,60px);
+    font-weight:900;line-height:1;
+    background:var(--grad-main);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    letter-spacing:-2px;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat__label{
+    margin-top:14px;font-size:13px;
+    color:var(--muted);font-weight:500;letter-spacing:.3px;
+  }
+  @media(max-width:900px){.stats__grid{grid-template-columns:repeat(2,1fr);}}
+
+  /* ============================================================
+     PRODUCTS
+     ============================================================ */
+  .products{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+    perspective:1400px;
+  }
+  .product{
+    position:relative;border-radius:24px;
+    padding:44px 36px;
+    background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+    border:1px solid var(--line);
+    overflow:hidden;
+    transition:transform .5s cubic-bezier(.7,0,.3,1), border-color .5s;
+    transform-style:preserve-3d;
+    min-height:400px;display:flex;flex-direction:column;
+  }
+  .product::before{
+    content:"";position:absolute;inset:0;border-radius:24px;
+    background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),
+      rgba(125,211,252,.15),transparent 40%);
+    opacity:0;transition:opacity .5s;pointer-events:none;
+  }
+  .product:hover::before{opacity:1;}
+  .product::after{
+    content:"";position:absolute;inset:-1px;border-radius:24px;
+    padding:1px;
+    background:linear-gradient(135deg,var(--accent),transparent 40%,transparent 60%,var(--accent));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:0;transition:opacity .5s;pointer-events:none;
+  }
+  .product:hover::after{opacity:1;}
+  .product__ico{
+    width:72px;height:72px;border-radius:20px;
+    background:var(--accent-bg);
+    display:grid;place-items:center;
+    font-size:34px;margin-bottom:28px;
+    transition:transform .5s cubic-bezier(.7,0,.3,1);
+    box-shadow:0 0 0 1px var(--accent) inset,0 20px 40px rgba(0,0,0,.3);
+  }
+  .product:hover .product__ico{
+    transform:translateZ(30px) rotate(-8deg) scale(1.06);
+  }
+  .product__role{
+    font-size:11px;font-weight:800;
+    letter-spacing:2px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:10px;
+  }
+  .product__title{
+    font-size:28px;font-weight:900;
+    letter-spacing:-.8px;color:var(--text);
+    margin:0 0 16px;
+  }
+  .product__desc{
+    font-size:15px;line-height:1.6;
+    color:var(--muted);flex:1;
+  }
+  .product__more{
+    margin-top:24px;
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:14px;font-weight:700;
+    color:var(--accent);
+    transition:gap .35s cubic-bezier(.7,0,.3,1);
+  }
+  .product:hover .product__more{gap:16px;}
+  .product--geo{--accent:#fbbf24;--accent-bg:rgba(251,191,36,.12);}
+  .product--drill{--accent:#ec4899;--accent-bg:rgba(236,72,153,.12);}
+  .product--station{--accent:#7dd3fc;--accent-bg:rgba(125,211,252,.12);}
+  @media(max-width:1024px){.products{grid-template-columns:1fr;}}
+
+  /* ============================================================
+     STICKY SHOWCASE
+     ============================================================ */
+  .sticky-section{
+    position:relative;
+    background:rgba(10,14,26,.35);
+    z-index:2;
+  }
+  .sticky-section::before{
+    content:"";position:absolute;inset:0;
+    pointer-events:none;
+    background:radial-gradient(circle at 20% 50%, var(--accent-bg, transparent), transparent 40%),
+               radial-gradient(circle at 80% 50%, rgba(125,211,252,.04), transparent 40%);
+  }
+  .sticky-section--geo{--accent:#fbbf24;--accent-bg:rgba(251,191,36,.05);}
+  .sticky-section--drill{--accent:#ec4899;--accent-bg:rgba(236,72,153,.05);}
+  .sticky-section--station{--accent:#7dd3fc;--accent-bg:rgba(125,211,252,.05);}
+
+  .sticky-inner{
+    position:relative;
+    max-width:1440px;margin:0 auto;
+    display:grid;grid-template-columns:1.1fr 0.9fr;gap:50px;
+    padding:140px 40px;
+  }
+  @media(max-width:1024px){
+    .sticky-inner{grid-template-columns:1fr;gap:40px;padding:80px 24px;}
+  }
+  .sticky-col--visual{
+    position:sticky;
+    top:100px;
+    align-self:start;
+    display:flex;
+    align-items:flex-start;
+    max-height:calc(100vh - 140px);
+  }
+  @media(max-width:1024px){
+    .sticky-col--visual{position:relative;top:0;height:auto;max-height:none;}
+  }
+  .sticky-col--text{
+    display:flex;flex-direction:column;gap:60px;
+  }
+  .sticky-step{
+    padding:60px 0;position:relative;
+  }
+  .sticky-step__num{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:13px;font-weight:800;letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--accent,#7dd3fc);margin-bottom:16px;
+  }
+  .sticky-step__num::before{content:"";width:28px;height:1px;background:currentColor;}
+  .sticky-step__title{
+    font-size:clamp(24px,3vw,36px);
+    font-weight:900;letter-spacing:-.8px;
+    line-height:1.1;margin:0 0 20px;
+  }
+  .sticky-step__text{
+    font-size:16px;line-height:1.65;
+    color:var(--muted);margin:0 0 24px;
+  }
+  .sticky-step__list{list-style:none;display:grid;gap:12px;}
+  .sticky-step__list li{
+    display:flex;gap:12px;align-items:flex-start;
+    font-size:15px;line-height:1.5;color:var(--text);
+  }
+  .sticky-step__list li::before{
+    content:"";flex-shrink:0;
+    width:20px;height:20px;border-radius:50%;
+    background:var(--accent,#7dd3fc);
+    margin-top:3px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23050810' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+    background-size:12px;background-repeat:no-repeat;background-position:center;
+  }
+  .sticky-step--geo{--accent:#fbbf24;}
+  .sticky-step--drill{--accent:#ec4899;}
+  .sticky-step--station{--accent:#7dd3fc;}
+
+  /* ============================================================
+     FRAME
+     ============================================================ */
+  .visual-frame{
+    position:relative;
+    width:100%;max-width:760px;
+    border-radius:20px;
+    background:linear-gradient(160deg,#0d1220,#070a14);
+    border:1px solid var(--line-2);
+    overflow:hidden;
+    box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px rgba(125,211,252,.08) inset;
+  }
+  .visual-frame__bar{
+    height:38px;
+    background:rgba(255,255,255,.03);
+    display:flex;align-items:center;gap:6px;
+    padding:0 16px;
+    border-bottom:1px solid var(--line);
+    position:relative;z-index:3;
+  }
+  .visual-frame__bar span{
+    width:10px;height:10px;border-radius:50%;
+    background:rgba(255,255,255,.1);
+  }
+  .visual-frame__bar span:nth-child(1){background:rgba(252,165,165,.6);}
+  .visual-frame__bar span:nth-child(2){background:rgba(253,224,71,.6);}
+  .visual-frame__bar span:nth-child(3){background:rgba(134,239,172,.6);}
+  .visual-frame__bar small{
+    margin-left:auto;color:var(--dim);font-size:11px;font-weight:600;
+    letter-spacing:.5px;
+  }
+  .visual-frame__stack{
+    position:relative;
+    aspect-ratio:16/10;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 50%,rgba(125,211,252,.05),transparent 60%);
+  }
+  .visual-frame__stack img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    opacity:0;
+    z-index:2;
+    pointer-events:none;
+    transition:opacity .7s cubic-bezier(.7,0,.3,1),transform .7s cubic-bezier(.7,0,.3,1);
+    transform:scale(1.05);
+    cursor:zoom-in;
+  }
+  .visual-frame__stack img.is-active{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+  }
+  .visual-frame__stack img[data-failed="1"]{display:none !important;}
+  .visual-frame__stack img[data-failed="1"]{display:none !important;}
+  .visual-frame__ph{
+    position:absolute;inset:0;z-index:1;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:var(--dim);font-size:13px;text-align:center;
+    gap:12px;padding:40px;
+    background:radial-gradient(circle at 50% 50%,rgba(125,211,252,.05),transparent 60%);
+  }
+  .visual-frame__ph b{color:var(--muted);font-size:15px;}
+  .visual-frame__ph code{
+    background:rgba(125,211,252,.08);color:var(--cyan);
+    padding:3px 10px;border-radius:6px;
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:12px;
+  }
+  .visual-frame__stack.has-loaded .visual-frame__ph{display:none;}
+  .visual-frame__zoom{
+    position:absolute;
+    bottom:12px;right:12px;
+    z-index:4;
+    padding:6px 12px;border-radius:20px;
+    background:rgba(5,8,16,.85);
+    border:1px solid rgba(125,211,252,.35);
+    color:var(--cyan);
+    font-size:11px;font-weight:700;letter-spacing:.5px;
+    backdrop-filter:blur(8px);
+    pointer-events:none;
+    display:inline-flex;align-items:center;gap:6px;
+    opacity:.85;transition:all .3s;
+  }
+  .visual-frame:hover .visual-frame__zoom{
+    background:rgba(125,211,252,.22);
+    border-color:var(--cyan);
+    opacity:1;
+  }
+
+  .sticky-progress{
+    position:absolute;left:-60px;top:60px;
+    width:2px;height:80px;
+    background:var(--line);
+    border-radius:2px;overflow:hidden;
+  }
+  .sticky-progress__fill{
+    position:absolute;top:0;left:0;
+    width:100%;height:0%;
+    background:var(--accent,#7dd3fc);
+    transition:height .3s;
+  }
+  @media(max-width:1024px){.sticky-progress{display:none;}}
+
+  /* ============================================================
+     TIMELINE
+     ============================================================ */
+  .timeline{
+    max-width:940px;margin:0 auto;
+    position:relative;padding:40px 0;
+  }
+  .timeline::before{
+    content:"";position:absolute;
+    left:44px;top:0;bottom:0;width:2px;
+    background:linear-gradient(180deg,var(--cyan),var(--purple),transparent);
+    opacity:.3;
+  }
+  .timeline__item{
+    position:relative;padding:0 0 60px 120px;
+    opacity:0;transform:translateY(50px);
+    transition:opacity 1s cubic-bezier(.7,0,.3,1),transform 1s cubic-bezier(.7,0,.3,1);
+  }
+  .timeline__item.is-visible{opacity:1;transform:none;}
+  .timeline__item:last-child{padding-bottom:0;}
+  .timeline__num{
+    position:absolute;left:0;top:0;
+    width:90px;height:90px;border-radius:24px;
+    background:linear-gradient(160deg,rgba(125,211,252,.08),rgba(167,139,250,.05));
+    border:1px solid var(--line-2);
+    display:grid;place-items:center;
+    font-size:28px;font-weight:900;color:var(--cyan);
+    box-shadow:0 20px 40px rgba(0,0,0,.4);
+    transition:transform .5s cubic-bezier(.7,0,.3,1);
+    backdrop-filter:blur(10px);
+  }
+  .timeline__item:hover .timeline__num{
+    transform:translateY(-4px) rotate(-3deg);
+    border-color:var(--cyan);
+  }
+  .timeline__tag{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:20px;
+    font-size:11px;font-weight:800;
+    letter-spacing:1.5px;text-transform:uppercase;
+    margin-bottom:14px;
+    backdrop-filter:blur(10px);
+  }
+  .tag-geo{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
+  .tag-drill{background:rgba(236,72,153,.12);color:#ec4899;border:1px solid rgba(236,72,153,.25);}
+  .tag-station{background:rgba(125,211,252,.12);color:#7dd3fc;border:1px solid rgba(125,211,252,.25);}
+  .tag-office{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+  .timeline__title{
+    font-size:clamp(22px,2.8vw,32px);
+    font-weight:900;letter-spacing:-.6px;
+    line-height:1.15;margin:0 0 16px;
+  }
+  .timeline__text{
+    font-size:15.5px;line-height:1.7;
+    color:var(--muted);max-width:680px;
+  }
+  @media(max-width:640px){
+    .timeline::before{left:24px;}
+    .timeline__item{padding-left:80px;padding-bottom:48px;}
+    .timeline__num{width:56px;height:56px;font-size:20px;border-radius:16px;}
+  }
+
+  /* ============================================================
+     DOCS
+     ============================================================ */
+  .docs-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:60px;
+  }
+  .doc-card{
+    position:relative;border-radius:24px;overflow:hidden;
+    background:linear-gradient(160deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+    border:1px solid var(--line);
+    padding:36px;
+    transition:transform .5s cubic-bezier(.7,0,.3,1),border-color .5s;
+  }
+  .doc-card:hover{border-color:var(--line-2);}
+  .doc-card__title{
+    font-size:22px;font-weight:900;
+    letter-spacing:-.4px;color:var(--text);
+    margin:0 0 10px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .doc-card__sub{
+    font-size:14.5px;line-height:1.6;
+    color:var(--muted);margin:0 0 28px;
+  }
+  .doc-card__shot{
+    position:relative;border-radius:14px;overflow:hidden;
+    background:#070a14;border:1px solid var(--line);
+    aspect-ratio:4/3;
+    transition:transform .6s cubic-bezier(.7,0,.3,1);
+    cursor:zoom-in;
+  }
+  .doc-card:hover .doc-card__shot{transform:scale(1.02);}
+  .doc-card__shot img{
+    width:100%;height:100%;
+    object-fit:contain;
+    background:#070a14;
+    padding:20px;
+    cursor:zoom-in;
+  }
+  .doc-card__shot .ph{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:10px;padding:30px;text-align:center;
+    color:var(--dim);font-size:13px;line-height:1.5;
+  }
+  .doc-card__shot .ph.is-show{display:flex;}
+  .doc-card__shot .ph b{color:var(--muted);}
+  .doc-card__shot .ph code{
+    background:rgba(125,211,252,.08);color:var(--cyan);
+    padding:2px 8px;border-radius:5px;
+    font-family:ui-monospace,Consolas,monospace;font-size:11.5px;
+  }
+  .doc-card__shot::after{
+    content:"🔍 Увеличить";
+    position:absolute;
+    bottom:12px;right:12px;
+    z-index:3;
+    padding:6px 12px;border-radius:20px;
+    background:rgba(5,8,16,.85);
+    border:1px solid rgba(125,211,252,.35);
+    color:var(--cyan);
+    font-size:11px;font-weight:700;letter-spacing:.5px;
+    backdrop-filter:blur(8px);
+    pointer-events:none;opacity:.85;
+    transition:all .3s;
+  }
+  .doc-card:hover .doc-card__shot::after{
+    background:rgba(125,211,252,.22);
+    border-color:var(--cyan);
+    opacity:1;
+  }
+  @media(max-width:900px){.docs-grid{grid-template-columns:1fr;}}
+
+  /* ============================================================
+     TECH GRID
+     ============================================================ */
+  .tech-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  }
+  .tech{
+    position:relative;padding:32px 28px;border-radius:20px;
+    background:linear-gradient(160deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+    border:1px solid var(--line);
+    transition:transform .5s cubic-bezier(.7,0,.3,1),border-color .5s,background .5s;
+    overflow:hidden;
+  }
+  .tech::before{
+    content:"";position:absolute;
+    top:0;left:0;width:60px;height:60px;
+    background:radial-gradient(circle,rgba(125,211,252,.25),transparent 70%);
+    opacity:0;transition:opacity .5s;filter:blur(15px);
+  }
+  .tech:hover{
+    transform:translateY(-6px);
+    border-color:var(--line-2);
+    background:linear-gradient(160deg,rgba(125,211,252,.05),rgba(255,255,255,.01));
+  }
+  .tech:hover::before{opacity:1;}
+  .tech__ico{
+    font-size:30px;margin-bottom:18px;
+    width:56px;height:56px;border-radius:14px;
+    display:grid;place-items:center;
+    background:rgba(125,211,252,.06);
+    border:1px solid var(--line-2);
+    transition:transform .5s cubic-bezier(.7,0,.3,1);
+  }
+  .tech:hover .tech__ico{
+    transform:rotate(-8deg) scale(1.08);
+    background:rgba(125,211,252,.12);
+  }
+  .tech__title{
+    font-size:17px;font-weight:800;
+    letter-spacing:-.3px;color:var(--text);
+    margin:0 0 10px;
+  }
+  .tech__text{
+    font-size:14.5px;line-height:1.55;color:var(--muted);
+  }
+  @media(max-width:1024px){.tech-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:640px){.tech-grid{grid-template-columns:1fr;}}
+
+  /* ============================================================
+     CTA
+     ============================================================ */
+  .cta{
+    position:relative;padding:160px 40px;
+    text-align:center;overflow:hidden;
+    z-index:2;
+  }
+  .cta__contours{
+    position:absolute;inset:0;
+    z-index:0;pointer-events:none;opacity:.6;
+    mask-image:radial-gradient(ellipse at 50% 50%,#000 30%,transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 30%,transparent 80%);
+  }
+  .cta__contours svg{width:100%;height:100%;}
+  .cta::before{
+    content:"";position:absolute;inset:-50%;
+    background:conic-gradient(from 90deg at 50% 50%,
+      transparent 0deg,
+      rgba(125,211,252,.15) 90deg,
+      transparent 180deg,
+      rgba(167,139,250,.15) 270deg,
+      transparent 360deg);
+    animation:rotate 24s linear infinite;
+    z-index:0;filter:blur(80px);
+  }
+  @keyframes rotate{
+    from{transform:rotate(0);}
+    to{transform:rotate(360deg);}
+  }
+  .cta__inner{position:relative;z-index:1;max-width:900px;margin:0 auto;}
+  .cta h2{
+    font-size:clamp(36px,6vw,80px);
+    line-height:1;margin:0 0 28px;
+    letter-spacing:-2px;
+  }
+  .cta__sub{
+    font-size:18px;line-height:1.6;
+    color:var(--muted);
+    max-width:600px;margin:0 auto 48px;
+  }
+  @media(max-width:900px){.cta{padding:100px 24px;}}
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .footer{
+    padding:80px 40px 40px;
+    background:rgba(10,14,26,.55);
+    border-top:1px solid var(--line);
+    position:relative;z-index:2;
+  }
+  .footer__inner{
+    max-width:1280px;margin:0 auto;
+    display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;
+    gap:48px;
+  }
+  .footer__brand{
+    font-size:22px;font-weight:900;
+    letter-spacing:-.5px;margin-bottom:18px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .footer__brand span{color:var(--cyan);}
+  .footer__desc{
+    font-size:14.5px;line-height:1.65;
+    color:var(--muted);max-width:360px;
+  }
+  .footer__col h4{
+    font-size:13px;font-weight:800;
+    letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--cyan);margin:0 0 20px;
+  }
+  .footer__col ul{list-style:none;display:grid;gap:11px;}
+  .footer__col a{
+    font-size:14.5px;color:var(--muted);
+    transition:color .3s;
+  }
+  .footer__col a:hover{color:var(--text);}
+
+  .map-legend{
+    max-width:1280px;margin:0 auto 40px;
+    padding:24px 32px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(5,8,16,.5);
+    display:grid;
+    grid-template-columns:auto repeat(5,1fr) auto;
+    gap:24px 32px;align-items:center;
+    font-size:12.5px;
+  }
+  .map-legend__title{
+    font-size:11px;font-weight:800;
+    letter-spacing:2px;text-transform:uppercase;
+    color:var(--cyan);white-space:nowrap;
+    border-right:1px solid var(--line);
+    padding-right:24px;
+  }
+  .map-legend__item{
+    display:flex;align-items:center;gap:10px;
+    color:var(--muted);
+    font-family:ui-monospace,"SF Mono",Consolas,monospace;
+    font-size:11.5px;letter-spacing:.3px;
+  }
+  .map-legend__swatch{
+    width:22px;height:22px;border-radius:5px;
+    border:1px solid rgba(255,255,255,.15);
+    flex-shrink:0;position:relative;overflow:hidden;
+  }
+  .map-legend__swatch--soil{
+    background:
+      repeating-linear-gradient(45deg,rgba(58,42,28,.9) 0,rgba(58,42,28,.9) 2px,transparent 2px,transparent 4px),
+      #2a1e14;
+  }
+  .map-legend__swatch--clay{
+    background:
+      repeating-linear-gradient(90deg,rgba(74,85,104,.8) 0,rgba(74,85,104,.8) 1px,transparent 1px,transparent 4px),
+      #1a2233;
+  }
+  .map-legend__swatch--sand{
+    background:
+      radial-gradient(circle at 30% 30%,rgba(251,191,36,.6) 0,rgba(251,191,36,.6) 1px,transparent 1.5px),
+      radial-gradient(circle at 70% 70%,rgba(251,191,36,.6) 0,rgba(251,191,36,.6) 1px,transparent 1.5px),
+      #3a2e14;
+    background-size:8px 8px,8px 8px;
+  }
+  .map-legend__swatch--ore{
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);
+    box-shadow:0 0 12px rgba(251,191,36,.5);
+  }
+  .map-legend__swatch--rock{
+    background:
+      repeating-linear-gradient(45deg,rgba(125,211,252,.5) 0,rgba(125,211,252,.5) 1px,transparent 1px,transparent 3px),
+      #1a2742;
+  }
+  .map-legend__swatch--drill{
+    background:#050810;border-color:var(--cyan);
+  }
+  .map-legend__swatch--drill::before{
+    content:"";position:absolute;top:50%;left:50%;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--cyan);
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 8px var(--cyan);
+  }
+  @media(max-width:900px){
+    .map-legend{grid-template-columns:1fr 1fr;gap:16px 20px;padding:20px;}
+    .map-legend__title{
+      grid-column:1 / -1;
+      border-right:none;border-bottom:1px solid var(--line);
+      padding-right:0;padding-bottom:12px;
+    }
+  }
+
+  .footer__bottom{
+    max-width:1280px;margin:40px auto 0;
+    padding-top:32px;
+    border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    font-size:13px;color:var(--dim);
+  }
+  @media(max-width:900px){
+    .footer{padding:60px 24px 30px;}
+    .footer__inner{grid-template-columns:1fr;gap:32px;}
+  }
+
+  /* ============================================================
+     TO TOP
+     ============================================================ */
+  .to-top{
+    position:fixed;bottom:32px;right:32px;z-index:100;
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(160deg,rgba(125,211,252,.15),rgba(167,139,250,.1));
+    border:1px solid var(--line-2);
+    display:grid;place-items:center;
+    font-size:20px;color:var(--cyan);
+    backdrop-filter:blur(12px);
+    opacity:0;pointer-events:none;
+    transform:translateY(20px) scale(.9);
+    transition:all .4s cubic-bezier(.7,0,.3,1);
+    box-shadow:0 20px 40px rgba(0,0,0,.4);
+  }
+  .to-top.is-visible{opacity:1;pointer-events:auto;transform:none;}
+  .to-top:hover{
+    background:linear-gradient(160deg,rgba(125,211,252,.25),rgba(167,139,250,.2));
+    transform:translateY(-4px) scale(1.06);
+  }
+
+  /* ============================================================
+     LIGHTBOX
+     ============================================================ */
+  .lightbox{
+    position:fixed;inset:0;z-index:10001;
+    background:rgba(2,5,12,.94);
+    backdrop-filter:blur(24px) saturate(140%);
+    -webkit-backdrop-filter:blur(24px) saturate(140%);
+    display:flex;align-items:center;justify-content:center;
+    padding:48px;
+    opacity:0;visibility:hidden;
+    transition:opacity .35s cubic-bezier(.7,0,.3,1),visibility .35s;
+    cursor:zoom-out;
+  }
+  .lightbox.is-open{opacity:1;visibility:visible;}
+  .lightbox__img{
+    max-width:100%;max-height:100%;
+    object-fit:contain;
+    border-radius:12px;
+    box-shadow:0 40px 120px rgba(0,0,0,.8),0 0 0 1px rgba(125,211,252,.15);
+    transform:scale(.94);
+    transition:transform .45s cubic-bezier(.7,0,.3,1);
+    cursor:default;
+  }
+  .lightbox.is-open .lightbox__img{transform:scale(1);}
+  .lightbox__close{
+    position:absolute;top:28px;right:28px;
+    width:52px;height:52px;border-radius:50%;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.15);
+    color:#fff;font-size:20px;
+    display:grid;place-items:center;
+    cursor:pointer;
+    transition:all .3s cubic-bezier(.7,0,.3,1);
+    z-index:2;
+  }
+  .lightbox__close:hover{
+    background:rgba(125,211,252,.2);
+    border-color:var(--cyan);
+    transform:rotate(90deg);
+  }
+  .lightbox__hint{
+    position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,.45);
+    font-size:12.5px;letter-spacing:1.5px;
+    text-transform:uppercase;font-weight:600;
+    pointer-events:none;z-index:2;
+  }
+  .lightbox__caption{
+    position:absolute;top:32px;left:50%;transform:translateX(-50%);
+    color:var(--cyan);
+    font-size:13px;letter-spacing:1px;
+    font-weight:700;padding:8px 18px;border-radius:20px;
+    background:rgba(125,211,252,.1);
+    border:1px solid rgba(125,211,252,.25);
+    backdrop-filter:blur(10px);
+    z-index:2;pointer-events:none;
+  }
+  @media(max-width:900px){
+    .lightbox{padding:20px;}
+    .lightbox__close{top:16px;right:16px;width:44px;height:44px;}
+    .lightbox__hint{display:none;}
+    .lightbox__caption{top:16px;font-size:11.5px;padding:6px 14px;}
+  }
+
+  /* ============================================================
+     REDUCED MOTION
+     ============================================================ */
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms!important;
+      animation-iteration-count:1!important;
+      transition-duration:.01ms!important;
+    }
+    .reveal{opacity:1!important;transform:none!important;}
+    .topo-layer svg.is-drawing .topo-contour{stroke-dashoffset:0!important;}
+    .drill-marker{opacity:1!important;}
+    .side-contours{opacity:1!important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<div class="page-grid"></div>
+
+<!-- ============================================================ -->
+<!-- БОКОВЫЕ ИЗОЛИНИИ -->
+<!-- ============================================================ -->
+<div class="side-contours side-contours--left" aria-hidden="true">
+  <svg id="sideContoursLeft" viewBox="0 0 400 2400" preserveAspectRatio="xMinYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <path class="side-contour" pathLength="1" d="M -50 100 C 80 60, 180 120, 260 90 S 380 40, 460 90"/>
+    <path class="side-contour" pathLength="1" d="M -50 180 C 80 140, 180 200, 260 170 S 380 120, 460 170"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 260 C 100 210, 200 290, 300 260 S 400 200, 460 240"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 320 C 100 290, 200 340, 300 320 S 400 290, 460 310"/>
+    <path class="side-contour" pathLength="1" d="M -50 420 C 80 380, 180 440, 260 410 S 380 360, 460 410"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 500 C 100 470, 200 520, 300 500 S 400 470, 460 490"/>
+    <path class="side-contour" pathLength="1" d="M -50 620 C 100 570, 200 650, 300 620 S 400 560, 460 600"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 720 C 100 680, 200 740, 300 720 S 400 680, 460 700"/>
+    <path class="side-contour" pathLength="1" d="M -50 820 C 80 780, 180 840, 260 810 S 380 760, 460 810"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 900 C 100 870, 200 920, 300 900 S 400 870, 460 890"/>
+    <path class="side-contour" pathLength="1" d="M -50 1000 C 100 950, 200 1030, 300 1000 S 400 940, 460 980"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1080 C 100 1050, 200 1100, 300 1080 S 400 1050, 460 1070"/>
+    <path class="side-contour" pathLength="1" d="M -50 1200 C 80 1160, 180 1220, 260 1190 S 380 1140, 460 1190"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1300 C 100 1250, 200 1330, 300 1300 S 400 1240, 460 1280"/>
+    <path class="side-contour" pathLength="1" d="M -50 1420 C 100 1380, 200 1440, 300 1420 S 400 1380, 460 1400"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1500 C 100 1470, 200 1520, 300 1500 S 400 1470, 460 1490"/>
+    <path class="side-contour" pathLength="1" d="M -50 1620 C 80 1580, 180 1640, 260 1610 S 380 1560, 460 1610"/>
+    <path class="side-contour" pathLength="1" d="M -50 1720 C 100 1680, 200 1740, 300 1720 S 400 1680, 460 1700"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1820 C 80 1780, 180 1840, 260 1810 S 380 1760, 460 1810"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1920 C 100 1870, 200 1950, 300 1920 S 400 1860, 460 1900"/>
+    <path class="side-contour" pathLength="1" d="M -50 2020 C 100 1980, 200 2040, 300 2020 S 400 1980, 460 2000"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2120 C 80 2080, 180 2140, 260 2110 S 380 2060, 460 2110"/>
+    <path class="side-contour" pathLength="1" d="M -50 2220 C 100 2180, 200 2240, 300 2220 S 400 2180, 460 2200"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2320 C 80 2280, 180 2340, 260 2310 S 380 2260, 460 2310"/>
+  </svg>
+</div>
+
+<div class="side-contours side-contours--right" aria-hidden="true">
+  <svg id="sideContoursRight" viewBox="0 0 400 2400" preserveAspectRatio="xMinYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <path class="side-contour" pathLength="1" d="M -50 140 C 100 100, 200 160, 300 130 S 400 80, 460 130"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 240 C 100 190, 200 270, 300 240 S 400 180, 460 220"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 340 C 100 300, 200 360, 300 340 S 400 300, 460 320"/>
+    <path class="side-contour" pathLength="1" d="M -50 460 C 100 420, 200 480, 300 460 S 400 420, 460 440"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 560 C 100 530, 200 580, 300 560 S 400 530, 460 550"/>
+    <path class="side-contour" pathLength="1" d="M -50 680 C 100 630, 200 710, 300 680 S 400 620, 460 660"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 780 C 100 740, 200 800, 300 780 S 400 740, 460 760"/>
+    <path class="side-contour" pathLength="1" d="M -50 880 C 80 840, 180 900, 260 870 S 380 820, 460 870"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 980 C 100 950, 200 1000, 300 980 S 400 950, 460 970"/>
+    <path class="side-contour" pathLength="1" d="M -50 1080 C 100 1040, 200 1100, 300 1080 S 400 1040, 460 1060"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1180 C 100 1140, 200 1200, 300 1180 S 400 1140, 460 1160"/>
+    <path class="side-contour" pathLength="1" d="M -50 1300 C 100 1260, 200 1320, 300 1300 S 400 1260, 460 1280"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1400 C 80 1360, 180 1420, 260 1390 S 380 1340, 460 1390"/>
+    <path class="side-contour" pathLength="1" d="M -50 1520 C 100 1480, 200 1540, 300 1520 S 400 1480, 460 1500"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 1620 C 100 1590, 200 1640, 300 1620 S 400 1590, 460 1610"/>
+    <path class="side-contour" pathLength="1" d="M -50 1740 C 100 1700, 200 1760, 300 1740 S 400 1700, 460 1720"/>
+    <path class="side-contour side-contour--accent" pathLength="1" d="M -50 1840 C 100 1800, 200 1860, 300 1840 S 400 1800, 460 1820"/>
+    <path class="side-contour" pathLength="1" d="M -50 1960 C 100 1920, 200 1980, 300 1960 S 400 1920, 460 1940"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2060 C 100 2030, 200 2080, 300 2060 S 400 2030, 460 2050"/>
+    <path class="side-contour" pathLength="1" d="M -50 2180 C 100 2140, 200 2200, 300 2180 S 400 2140, 460 2160"/>
+    <path class="side-contour side-contour--dense" pathLength="1" d="M -50 2280 C 80 2240, 180 2300, 260 2270 S 380 2220, 460 2270"/>
+    <path class="side-contour" pathLength="1" d="M -50 2380 C 100 2340, 200 2400, 300 2380 S 400 2340, 460 2360"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<div class="preloader" id="preloader">
+  <div class="preloader__mark">CoreKit</div>
+  <div class="preloader__bar"></div>
+</div>
+
+<!-- ============================================================ -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor__ring" id="cursorRing"></div>
+
+<!-- ============================================================ -->
+<div class="progress-bar">
+  <div class="progress-bar__fill" id="progressFill"></div>
+</div>
+
+<!-- ============================================================ -->
+<nav class="nav" id="nav">
+  <a href="#" class="nav__logo">
+    <div class="nav__logo-mark">🧭</div>
+    Core<span>Kit</span>
+  </a>
+  <div class="nav__menu">
+    <a href="#products">Продукты</a>
+    <a href="#geo">Geo</a>
+    <a href="#drill">Drill</a>
+    <a href="#station">Station</a>
+    <a href="#docs">Документы</a>
+    <a href="#scenario">Сценарий</a>
+    <a href="#contact" class="nav__cta">Обсудить</a>
+  </div>
+</nav>
+
+<!-- ============================================================ -->
+<section class="hero">
+  <div class="map-corner map-corner--tl">N 56°12'48"</div>
+  <div class="map-corner map-corner--tr">N 56°12'48"</div>
+  <div class="map-corner map-corner--bl">E 92°30'12"</div>
+  <div class="map-corner map-corner--br">E 92°30'12"</div>
+
+  <div class="topo-layer">
+    <svg id="topoSVG" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path class="topo-contour" pathLength="1" d="M 260 380 C 340 300, 480 320, 560 400 S 620 580, 500 660 S 280 640, 220 540 S 180 460, 260 380 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 300 420 C 360 360, 460 380, 520 440 S 560 580, 470 630 S 320 620, 280 540 S 260 470, 300 420 Z"/>
+      <path class="topo-contour topo-contour--accent" pathLength="1" d="M 340 450 C 390 410, 450 430, 490 470 S 510 570, 450 600 S 360 590, 330 540 S 320 480, 340 450 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 370 480 C 400 460, 440 470, 460 500 S 470 560, 430 580 S 380 570, 360 540 S 360 500, 370 480 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 1050 320 C 1180 260, 1340 320, 1400 460 S 1380 680, 1220 740 S 980 720, 920 580 S 920 380, 1050 320 Z"/>
+      <path class="topo-contour" pathLength="1" d="M 1100 370 C 1200 330, 1310 380, 1350 480 S 1330 640, 1200 680 S 1010 660, 970 560 S 990 400, 1100 370 Z"/>
+      <path class="topo-contour topo-contour--accent" pathLength="1" d="M 1140 420 C 1210 400, 1280 430, 1300 500 S 1280 600, 1200 620 S 1070 600, 1050 530 S 1080 440, 1140 420 Z"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 300 C 120 260, 200 300, 320 280 S 480 220, 620 280 S 780 340, 900 300"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 340 C 120 300, 200 340, 320 320 S 480 260, 620 320 S 780 380, 900 340"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 700 500 C 820 460, 900 500, 1020 480 S 1180 420, 1320 480 S 1480 540, 1600 500"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 700 540 C 820 500, 900 540, 1020 520 S 1180 460, 1320 520 S 1480 580, 1600 540"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 200 700 C 320 660, 400 700, 520 680 S 680 620, 820 680"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 200 740 C 320 700, 400 740, 520 720 S 680 660, 820 720"/>
+      <path class="topo-contour" pathLength="1" d="M 0 620 C 200 600, 400 640, 600 620 S 1000 580, 1200 620 S 1500 660, 1600 640"/>
+      <path class="topo-contour topo-contour--dense" pathLength="1" d="M 0 660 C 200 640, 400 680, 600 660 S 1000 620, 1200 660 S 1500 700, 1600 680"/>
+    </svg>
+  </div>
+
+  <div class="coord-layer">
+    <div class="coord-tick coord-tick--x" style="left:20%">58°N</div>
+    <div class="coord-tick coord-tick--x" style="left:40%">59°N</div>
+    <div class="coord-tick coord-tick--x" style="left:60%">60°N</div>
+    <div class="coord-tick coord-tick--x" style="left:80%">61°N</div>
+    <div class="coord-tick coord-tick--y" style="top:20%">93°E</div>
+    <div class="coord-tick coord-tick--y" style="top:40%">94°E</div>
+    <div class="coord-tick coord-tick--y" style="top:60%">95°E</div>
+    <div class="coord-tick coord-tick--y" style="top:80%">96°E</div>
+  </div>
+
+  <div class="drill-layer">
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label">DH-101 <span class="drill-marker__depth">/ 124 м</span></span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label">DH-102 <span class="drill-marker__depth">/ 98 м</span></span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label">DH-103 <span class="drill-marker__depth">/ 156 м</span></span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label">DH-104 <span class="drill-marker__depth">/ 82 м</span></span>
+    </div>
+    <div class="drill-marker">
+      <span class="drill-marker__dot"></span>
+      <span class="drill-marker__label">DH-105 <span class="drill-marker__depth">/ 110 м</span></span>
+    </div>
+  </div>
+
+  <div class="compass">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="compassGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#7dd3fc" stop-opacity=".3"/>
+          <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="44" fill="url(#compassGlow)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#7dd3fc" stroke-width=".8" stroke-opacity=".5"/>
+      <circle cx="50" cy="50" r="30" fill="none" stroke="#7dd3fc" stroke-width=".5" stroke-opacity=".3"/>
+      <circle cx="50" cy="50" r="20" fill="none" stroke="#7dd3fc" stroke-width=".5" stroke-opacity=".25"/>
+      <line x1="50" y1="10" x2="50" y2="22" stroke="#7dd3fc" stroke-width="1" stroke-opacity=".7"/>
+      <line x1="50" y1="78" x2="50" y2="90" stroke="#7dd3fc" stroke-width="1" stroke-opacity=".5"/>
+      <line x1="10" y1="50" x2="22" y2="50" stroke="#7dd3fc" stroke-width="1" stroke-opacity=".5"/>
+      <line x1="78" y1="50" x2="90" y2="50" stroke="#7dd3fc" stroke-width="1" stroke-opacity=".5"/>
+      <line x1="22" y1="22" x2="28" y2="28" stroke="#7dd3fc" stroke-width=".6" stroke-opacity=".35"/>
+      <line x1="78" y1="22" x2="72" y2="28" stroke="#7dd3fc" stroke-width=".6" stroke-opacity=".35"/>
+      <line x1="22" y1="78" x2="28" y2="72" stroke="#7dd3fc" stroke-width=".6" stroke-opacity=".35"/>
+      <line x1="78" y1="78" x2="72" y2="72" stroke="#7dd3fc" stroke-width=".6" stroke-opacity=".35"/>
+      <path d="M 50 12 L 53 30 L 50 26 L 47 30 Z" fill="#7dd3fc"/>
+      <text x="50" y="9" font-family="ui-monospace,monospace" font-size="7" font-weight="700" fill="#7dd3fc" text-anchor="middle">N</text>
+      <text x="50" y="97" font-family="ui-monospace,monospace" font-size="6" fill="#7dd3fc" text-anchor="middle" opacity=".5">S</text>
+      <text x="6" y="52" font-family="ui-monospace,monospace" font-size="6" fill="#7dd3fc" text-anchor="middle" opacity=".5">W</text>
+      <text x="94" y="52" font-family="ui-monospace,monospace" font-size="6" fill="#7dd3fc" text-anchor="middle" opacity=".5">E</text>
+    </svg>
+  </div>
+
+  <div class="scale-bar">
+    <div class="scale-bar__label">МАСШТАБ 1:5 000</div>
+    <div class="scale-bar__ruler">
+      <div class="scale-bar__seg" data-label="0"></div>
+      <div class="scale-bar__seg"></div>
+      <div class="scale-bar__seg"></div>
+      <div class="scale-bar__seg" data-label="100 м"></div>
+    </div>
+  </div>
+
+  <div class="hero__inner">
+    <div class="hero__eyebrow">Геологоразведка · Оффлайн · Без сервера</div>
+
+    <h1 class="hero__title">
+      <span class="hero__title-line"><span>Документация</span></span>
+      <span class="hero__title-line"><span>керна <em class="outline">без бумаги</em></span></span>
+      <span class="hero__title-line"><span class="grad">и Excel</span></span>
+    </h1>
+
+    <p class="hero__sub">
+      Экосистема из трёх приложений, которая закрывает весь цикл геологоразведки —
+      от кернового ящика в поле до сдачи итоговой документации в офисе.
+    </p>
+
+    <div class="hero__actions">
+      <a href="#products" class="btn btn--primary magnetic">
+        Смотреть продукты
+        <span class="btn__ico">→</span>
+      </a>
+      <a href="#scenario" class="btn btn--ghost magnetic">
+        🎬 Как это работает
+      </a>
+    </div>
+  </div>
+
+  <div class="hero__scroll">
+    <span>Скролл</span>
+    <div class="hero__scroll-line"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="marquee">
+  <div class="marquee__track" id="marqueeTrack"></div>
+</div>
+
+<!-- ============================================================ -->
+<section class="stats">
+  <div class="stats__grid">
+    <div class="stat reveal">
+      <div class="stat__value" data-count="3" data-duration="1500">0</div>
+      <div class="stat__label">программы в экосистеме</div>
+    </div>
+    <div class="stat reveal reveal-d1">
+      <div class="stat__value" data-count="100" data-suffix="%">0</div>
+      <div class="stat__label">работает оффлайн</div>
+    </div>
+    <div class="stat reveal reveal-d2">
+      <div class="stat__value" data-count="15" data-suffix="+">0</div>
+      <div class="stat__label">типов отчётов</div>
+    </div>
+    <div class="stat reveal reveal-d3">
+      <div class="stat__value" data-count="0" data-prefix="₽">0</div>
+      <div class="stat__label">за сервер и связь</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="strata-divider" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="strata-soil" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="#1a1208"/>
+        <line x1="0" y1="3" x2="6" y2="3" stroke="#3a2a1c" stroke-width="1"/>
+      </pattern>
+      <pattern id="strata-clay" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+        <rect width="8" height="8" fill="#0f1729"/>
+        <line x1="0" y1="4" x2="8" y2="4" stroke="#2d3a55" stroke-width="1"/>
+      </pattern>
+      <pattern id="strata-sand" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="#1a2742"/>
+        <circle cx="2" cy="2" r="0.7" fill="#3b5a8c"/>
+        <circle cx="5" cy="5" r="0.7" fill="#3b5a8c"/>
+      </pattern>
+      <pattern id="strata-ore" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+        <rect width="6" height="6" fill="#2a1f08"/>
+        <circle cx="3" cy="3" r="1" fill="#fbbf24" opacity=".7"/>
+      </pattern>
+      <pattern id="strata-rock" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+        <rect width="10" height="10" fill="#0b1324"/>
+        <line x1="0" y1="0" x2="10" y2="10" stroke="#1e3055" stroke-width="1"/>
+        <line x1="10" y1="0" x2="0" y2="10" stroke="#1e3055" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <path d="M 0 15 Q 200 10, 400 18 T 800 14 T 1200 20 T 1440 16 L 1440 28 Q 1200 32, 1000 26 T 600 30 T 200 26 T 0 28 Z" fill="url(#strata-soil)" opacity=".6"/>
+    <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".6"/>
+    <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".55"/>
+    <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".55"/>
+    <path d="M 0 52 Q 200 50, 400 54 T 800 51 T 1200 56 T 1440 53 L 1440 58 Q 1200 60, 1000 57 T 600 59 T 200 57 T 0 58 Z" fill="url(#strata-ore)" opacity=".45"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<section class="section" id="products">
+  <div class="container">
+    <div class="reveal">
+      <div class="label">Три программы — один маршрут</div>
+      <h2>Из поля — в камералку,<br><span class="grad">без потерь и переписки</span></h2>
+      <p class="lead">
+        Геолог документирует керн в поле, буровой мастер ведёт смены и рейсы,
+        ведущий геолог в офисе собирает всё вместе и превращает в готовые документы.
+      </p>
+    </div>
+
+    <div class="products">
+      <a href="#geo" class="product product--geo reveal tilt">
+        <div class="product__ico">📋</div>
+        <div class="product__role">Поле · Геолог</div>
+        <div class="product__title">CoreKit Geo</div>
+        <div class="product__desc">
+          Полный цикл документации керна на планшете или ноутбуке. Литология,
+          тектоника, прожилки, руда, метасоматоз, опробование, живая валидация — у ящика.
+        </div>
+        <div class="product__more">Подробнее <span>→</span></div>
+      </a>
+
+      <a href="#drill" class="product product--drill reveal reveal-d1 tilt">
+        <div class="product__ico">🛢</div>
+        <div class="product__role">Поле · Буровой мастер</div>
+        <div class="product__title">CoreKit Drill</div>
+        <div class="product__desc">
+          Электронный буровой журнал. Рейсы, тех. режим, промывка, операции,
+          аварии, суточный рапорт мастера. Заменяет бумагу и тетрадь ПВА.
+        </div>
+        <div class="product__more">Подробнее <span>→</span></div>
+      </a>
+
+      <a href="#station" class="product product--station reveal reveal-d2 tilt">
+        <div class="product__ico">🧭</div>
+        <div class="product__role">Офис · Ведущий геолог</div>
+        <div class="product__title">CoreKit Station</div>
+        <div class="product__desc">
+          Реестр, каталог проб, сводная статистика, верификация, проверка участка,
+          отчёты A4, полевой журнал-разворот и геологическая колонка.
+        </div>
+        <div class="product__more">Подробнее <span>→</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="sticky-section sticky-section--geo" id="geo">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__bar">
+          <span></span><span></span><span></span>
+          <small id="geoFrameLabel">geo.html · Литология</small>
+        </div>
+        <div class="visual-frame__stack" id="geoFrameStack">
+          <img src="screenshots/geo-lithology.png" alt="CoreKit Geo — вкладка Литология" data-scene="0" data-failed="0">
+          <img src="screenshots/geo-dashboard.png" alt="CoreKit Geo — Дашборд скважины" data-scene="1" data-failed="0">
+          <img src="screenshots/geo-samples.png" alt="CoreKit Geo — Опробование" data-scene="2" data-failed="0">
+          <img src="screenshots/geo-validation.png" alt="CoreKit Geo — Валидация данных" data-scene="3" data-failed="0">
+          <div class="visual-frame__zoom">🔍 Увеличить</div>
+          <div class="visual-frame__ph">
+            <b>Ждём скриншоты Geo</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>geo-lithology.png</code>
+            <code>geo-dashboard.png</code>
+            <code>geo-samples.png</code>
+            <code>geo-validation.png</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--geo" data-scene="0">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Geo · 01</div>
+        <h3 class="sticky-step__title">Полный цикл документации керна</h3>
+        <p class="sticky-step__text">
+          Все разделы в одной программе, в привычной последовательности.
+          Работает оффлайн, на планшете и на ноутбуке. Данные не теряются.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Паспорт, конструкция, координаты X/Y/Z, азимут, угол, персонал</li>
+          <li>Литология: порода, структура, текстура, цвет, оттенок, выветривание, контакт</li>
+          <li>Тектоника, элементы залегания, трещиноватость, прожилки, метасоматоз, руда</li>
+          <li>Опробование с пакетным вводом и авто-привязкой литологии</li>
+          <li>Керновые ящики и буровые рейсы с расчётом выхода керна и RQD</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="1">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Geo · 02</div>
+        <h3 class="sticky-step__title">Дашборд скважины в реальном времени</h3>
+        <p class="sticky-step__text">
+          Живая аналитика по скважине: сколько пробурено, средний выход керна,
+          RQD, распределение по породам, кривая выхода и RQD по глубине.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Метрики: проходка, выход керна, RQD, глубина факт/план</li>
+          <li>Кривая выхода керна и RQD — визуально видно проблемные интервалы</li>
+          <li>Распределение по породам с процентами и метражом</li>
+          <li>Список рудных интервалов с минералом, количеством и размером</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="2">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Geo · 03</div>
+        <h3 class="sticky-step__title">Опробование и сводное описание</h3>
+        <p class="sticky-step__text">
+          Пакетное создание проб одной кнопкой, авто-привязка литологии к каждой пробе,
+          сборка полного текстового описания интервала из всех разделов.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Пакетный ввод: 10, 100, 1000 проб за один клик</li>
+          <li>Авто-привязка литологии по максимальному перекрытию</li>
+          <li>Сводное описание собирается автоматически из всех разделов</li>
+          <li>Ручные правки описания сохраняются при изменении исходных данных</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--geo" data-scene="3">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Geo · 04</div>
+        <h3 class="sticky-step__title">Живая валидация прямо у ящика</h3>
+        <p class="sticky-step__text">
+          Программа проверяет данные по мере ввода — задолго до офиса. Ошибки
+          подсвечиваются прямо в таблице, замечания собираются в отдельное окно.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Пересечения и разрывы интервалов литологии, тектоники, руды</li>
+          <li>Выход за фактическую глубину скважины, отрицательные значения</li>
+          <li>Дубликаты номеров проб и керновых ящиков</li>
+          <li>Керн больше пробуренного, RQD больше выхода керна</li>
+          <li>Противоречия в датах, пустые обязательные поля паспорта</li>
+          <li>Кнопка «Проверить» с полным отчётом по категориям: ошибки и замечания</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="strata-divider strata-divider--flip" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0 15 Q 200 10, 400 18 T 800 14 T 1200 20 T 1440 16 L 1440 28 Q 1200 32, 1000 26 T 600 30 T 200 26 T 0 28 Z" fill="url(#strata-soil)" opacity=".5"/>
+    <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".5"/>
+    <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".5"/>
+    <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".5"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<section class="sticky-section sticky-section--drill" id="drill">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__bar">
+          <span></span><span></span><span></span>
+          <small id="drillFrameLabel">drill.html · Рейсы</small>
+        </div>
+        <div class="visual-frame__stack" id="drillFrameStack">
+          <img src="screenshots/drill-runs.png" alt="CoreKit Drill — вкладка Рейсы" data-scene="0" data-failed="0">
+          <img src="screenshots/drill-run-card.png" alt="CoreKit Drill — карточка рейса" data-scene="1" data-failed="0">
+          <img src="screenshots/drill-dashboard.png" alt="CoreKit Drill — Дашборд проходки" data-scene="2" data-failed="0">
+          <div class="visual-frame__zoom">🔍 Увеличить</div>
+          <div class="visual-frame__ph">
+            <b>Ждём скриншоты Drill</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>drill-runs.png</code>
+            <code>drill-run-card.png</code>
+            <code>drill-dashboard.png</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--drill" data-scene="0">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Drill · 01</div>
+        <h3 class="sticky-step__title">Рейсы и тех. режим по сменам</h3>
+        <p class="sticky-step__text">
+          Электронный буровой журнал мастера. Каждый рейс — дата, смена, интервалы,
+          керн, выход %, наконечник, диаметр, категория по буримости.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Автоматический расчёт проходки, выхода керна и RQD</li>
+          <li>Цветовая индикация выхода керна: норма / внимание / аварийный</li>
+          <li>Цифры прогресса скважины в шапке: «X / Y м (Z%)»</li>
+          <li>Чипы быстрого доступа: комментарии 💬 и аварии ⚠ прямо в строке рейса</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--drill" data-scene="1">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Drill · 02</div>
+        <h3 class="sticky-step__title">Карточка рейса с операциями</h3>
+        <p class="sticky-step__text">
+          Развёрнутая карточка рейса: интервалы, тех. режим, промывочная жидкость,
+          операции за смену — СПО, замена коронки, обсад, тампонаж, монтаж.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Давление на забой, об/мин, расход промывочной жидкости</li>
+          <li>Уд. вес, вязкость, содержание песка, коэф. фильтрации</li>
+          <li>Чипы операций с быстрым выбором за один клик</li>
+          <li>Копирование тех. режима из предыдущего рейса — для однотипных смен</li>
+          <li>Состав смены, отклонения, состояние оборудования, подписи мастеров</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--drill" data-scene="2">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Drill · 03</div>
+        <h3 class="sticky-step__title">Комментарии геолога и дашборд</h3>
+        <p class="sticky-step__text">
+          Геолог оставляет комментарии с приоритетом и статусом — мастер видит их
+          прямо в карточке рейса. Дашборд показывает проходку по дням и сменам.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Комментарии с типами: замечание, требование, аварийная, наблюдение</li>
+          <li>Приоритет и статус: открыт / принят / закрыт</li>
+          <li>Столбчатая диаграмма проходки по дням</li>
+          <li>Распределение по сменам I / II / III</li>
+          <li>Реестр аварий и открытые комментарии — одной сводкой</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="strata-divider" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0 15 Q 200 10, 400 18 T 800 14 T 1200 20 T 1440 16 L 1440 28 Q 1200 32, 1000 26 T 600 30 T 200 26 T 0 28 Z" fill="url(#strata-soil)" opacity=".6"/>
+    <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".6"/>
+    <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".55"/>
+    <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".55"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<section class="sticky-section sticky-section--station" id="station">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__bar">
+          <span></span><span></span><span></span>
+          <small id="stationFrameLabel">station.html · Реестр скважин</small>
+        </div>
+        <div class="visual-frame__stack" id="stationFrameStack">
+          <img src="screenshots/station-registry.png" alt="CoreKit Station — Реестр скважин" data-scene="0" data-failed="0">
+          <img src="screenshots/station-catalog.png" alt="CoreKit Station — Каталог проб и анализов" data-scene="1" data-failed="0">
+          <img src="screenshots/station-stats.png" alt="CoreKit Station — Сводная статистика участка" data-scene="2" data-failed="0">
+          <img src="screenshots/station-verify.png" alt="CoreKit Station — Акт верификации" data-scene="3" data-failed="0">
+          <img src="screenshots/station-check.png" alt="CoreKit Station — Проверка участка" data-scene="4" data-failed="0">
+          <img src="screenshots/station-reports.png" alt="CoreKit Station — Отчёты" data-scene="5" data-failed="0">
+          <div class="visual-frame__zoom">🔍 Увеличить</div>
+          <div class="visual-frame__ph">
+            <b>Ждём скриншоты Station</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>station-registry.png</code>
+            <code>station-catalog.png</code>
+            <code>station-stats.png</code>
+            <code>station-verify.png</code>
+            <code>station-check.png</code>
+            <code>station-reports.png</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--station" data-scene="0">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 01</div>
+        <h3 class="sticky-step__title">Реестр скважин участка</h3>
+        <p class="sticky-step__text">
+          Все скважины в одной таблице: номер, статус, глубины, даты, геолог,
+          бурмастер, источник данных. Поиск, фильтры, массовые операции, экспорт в Excel.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Цветные бейджи статусов: проектная / в бурении / задокументирована / верифицирована / сдана</li>
+          <li>Флаги проблем: ⚠ валидация, ⏰ просрочка, 💬 комментарии верификатора</li>
+          <li>Источник данных: 🔵 Geo, 🟠 Drill, 🟢 Geo+Drill, ⚪ вручную</li>
+          <li>Массовая верификация партии скважин одним кликом</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="1">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 02</div>
+        <h3 class="sticky-step__title">Каталог проб и анализов</h3>
+        <p class="sticky-step__text">
+          Все пробы со всех скважин в одной таблице. Импорт результатов из CSV
+          лабораторий ALS / SGS / BV. Cut-off по любому элементу с подсветкой аномалий.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Статусы проб: не отправлена / в лаборатории / получены результаты</li>
+          <li>Ручной ввод по 12 элементам, каппаметрия, привязка к партии и накладной</li>
+          <li>Импорт CSV: автоопределение столбца пробы и элементов</li>
+          <li>Cut-off с зелёной подсветкой проб выше порога</li>
+          <li>Просроченные пробы: >30 дней в лаборатории без результата</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="2">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 03</div>
+        <h3 class="sticky-step__title">Сводная статистика участка</h3>
+        <p class="sticky-step__text">
+          Полная аналитика по метражу, породам, метасоматозу и содержаниям.
+          Работает по всем скважинам или только по выделенным в реестре.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Метраж, средний выход керна, средний RQD</li>
+          <li>Распределение по породам, метасоматозу, рудным минералам</li>
+          <li>Статистика по элементам: среднее, медиана, min/max, процентили P10–P90</li>
+          <li>Коэффициент вариации CV с цветовой индикацией разброса</li>
+          <li>QA/QC: контроль соблюдения норм 1:20:1:1</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="3">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 04</div>
+        <h3 class="sticky-step__title">Верификация и акт верификации</h3>
+        <p class="sticky-step__text">
+          Второй уровень контроля после полевой валидации. Чек-лист по каждому
+          разделу скважины, комментарии, подпись. Официальный акт A4 на выходе.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Чек-лист: паспорт, литология, тектоника, руда, метасоматоз, прожилки, опробование</li>
+          <li>Комментарии верификатора с датой и подписью</li>
+          <li>Сброс верификации при импорте новой версии — никаких «верифицировано по устаревшим данным»</li>
+          <li>Акт верификации A4: официальный документ с замечаниями и подписями</li>
+          <li>История изменений: кто, когда, что было, что стало — с откатом в один клик</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="4">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 05</div>
+        <h3 class="sticky-step__title">Проверка участка — сквозной контроль</h3>
+        <p class="sticky-step__text">
+          Автоматический поиск проблем не в одной скважине, а по всему участку.
+          Ровно та логика, что и в Geo, но на уровне проекта целиком.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Критические ошибки скважин и замечания — сводкой по участку</li>
+          <li>Руда без опробования: интервалы с арсенопиритом / золотом без проб</li>
+          <li>Просроченные пробы и пустые результаты у статуса «получены»</li>
+          <li>Неполная верификация: скважина верифицирована, но не все разделы отмечены</li>
+          <li>Отсутствие координат X/Y у скважины</li>
+          <li>Неединообразие справочников: «андезит» и «Андезит» — разные записи</li>
+          <li>Кнопка «Перейти» — прыжок прямо к проблемному полю в карточке скважины</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--station" data-scene="5">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Station · 06</div>
+        <h3 class="sticky-step__title">Отчёты A4 и Excel</h3>
+        <p class="sticky-step__text">
+          Готовые официальные формы для сдачи. Реестры, сводки, справки, акты —
+          в A4-предпросмотре с печатью в PDF или выгрузкой в Excel.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Реестр скважин и реестр с координатами</li>
+          <li>Опись керновых ящиков, реестр буровых рейсов</li>
+          <li>Справка по пробам, сводки по литологии, метасоматозу, руде</li>
+          <li>QA/QC, сводка за период, отчёт по геологам</li>
+          <li>Паспорт участка и акт верификации</li>
+          <li>Экспорт всей скважины в многолистовой Excel одним файлом</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="strata-divider strata-divider--flip" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0 15 Q 200 10, 400 18 T 800 14 T 1200 20 T 1440 16 L 1440 28 Q 1200 32, 1000 26 T 600 30 T 200 26 T 0 28 Z" fill="url(#strata-soil)" opacity=".5"/>
+    <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".5"/>
+    <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".5"/>
+    <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".5"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<section class="section" id="docs">
+  <div class="container">
+    <div class="reveal">
+      <div class="label">Официальные документы</div>
+      <h2>Полевой журнал<br><span class="grad">и геологическая колонка</span></h2>
+      <p class="lead">
+        То, что отличает CoreKit от обычных таблиц. Настоящий полевой журнал
+        в формате A3-разворота и геологическая колонка с гибким масштабом —
+        формируются автоматически и сохраняются в PDF.
+      </p>
+    </div>
+
+    <div class="docs-grid">
+      <div class="doc-card reveal">
+        <div class="doc-card__title">📖 Полевой журнал · A3</div>
+        <p class="doc-card__sub">
+          Разворот A3 как в бумажном журнале: слева геологическая колонка с крапом,
+          справа описание и таблица проб с результатами. Единицы переключаются.
+        </p>
+        <div class="doc-card__shot">
+          <img src="screenshots/station-journal.png" alt="Полевой журнал A3" data-failed="0" class="doc-shot-img">
+          <div class="ph">
+            <b>Скриншот не найден</b>
+            <span>Положите <code>screenshots/station-journal.png</code></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card reveal reveal-d2">
+        <div class="doc-card__title">📊 Геологическая колонка</div>
+        <p class="doc-card__sub">
+          Книжный формат A4/A3. Гибридный масштаб растягивает редкие интервалы
+          под описание, строгий держит линейную шкалу 1:200.
+        </p>
+        <div class="doc-card__shot">
+          <img src="screenshots/station-column.png" alt="Геологическая колонка" data-failed="0" class="doc-shot-img">
+          <div class="ph">
+            <b>Скриншот не найден</b>
+            <span>Положите <code>screenshots/station-column.png</code></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="section" id="scenario">
+  <div class="container container--narrow">
+    <div class="reveal" style="text-align:center;">
+      <div class="label" style="justify-content:center;">Реальный сценарий</div>
+      <h2 style="text-align:center;">Один участок, одна скважина,<br><span class="grad">шесть шагов</span></h2>
+      <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto;">
+        Как выглядит полный цикл работы с CoreKit на примере скважины DH-104
+        с рудным интервалом 45–62 м.
+      </p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline__item">
+        <div class="timeline__num">01</div>
+        <div class="timeline__tag tag-station">Station · Офис</div>
+        <h3 class="timeline__title">Проектирование скважины</h3>
+        <p class="timeline__text">
+          Ведущий геолог создаёт DH-104 в реестре Station: координаты, проектную глубину,
+          геологическое задание, назначение. Скважина пока в статусе «проектная» — ждёт бурения.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">02</div>
+        <div class="timeline__tag tag-drill">Drill · Поле</div>
+        <h3 class="timeline__title">Бурение и ежедневные рапорты</h3>
+        <p class="timeline__text">
+          Буровой мастер ведёт смены в Drill: заполняет рейсы, тех. режим, промывку,
+          отмечает операции и аварии. В конце смены печатает суточный рапорт A4.
+          Геолог при необходимости оставляет комментарии — мастер видит их сразу.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">03</div>
+        <div class="timeline__tag tag-geo">Geo · Поле</div>
+        <h3 class="timeline__title">Документация керна и полевая валидация</h3>
+        <p class="timeline__text">
+          Геолог документирует поднятый керн в Geo: литологию, тектонику, прожилки, руду,
+          метасоматоз, опробование. Программа сразу подсвечивает ошибки — пересечения,
+          разрывы, дубликаты, выход за глубину. В конце цикла — автосборка описания.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">04</div>
+        <div class="timeline__tag tag-office">Обмен · Флешка / Облако</div>
+        <h3 class="timeline__title">Передача данных в офис</h3>
+        <p class="timeline__text">
+          Из Drill — файл рейсов «Для геолога». Из Geo — файл .json со всей документацией.
+          Оба сохраняются в облако или на флешку. Никаких серверов, никакой настройки сети.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">05</div>
+        <div class="timeline__tag tag-station">Station · Офис</div>
+        <h3 class="timeline__title">Импорт, верификация, проверка участка</h3>
+        <p class="timeline__text">
+          Импорт файлов в Station. Автоматически создаются записи в каталоге проб,
+          обновляется реестр. Верификация по разделам, акт верификации A4 или возврат
+          документатору. Далее — сквозная проверка участка: руда без опробования,
+          просроченные пробы, неполная верификация, координаты, единообразие справочников.
+        </p>
+      </div>
+
+      <div class="timeline__item">
+        <div class="timeline__num">06</div>
+        <div class="timeline__tag tag-station">Station · Офис</div>
+        <h3 class="timeline__title">Отчётность и аналитика</h3>
+        <p class="timeline__text">
+          Полевой журнал A3-разворот, геологическая колонка, сводки по литологии
+          и метасоматозу, рудная сводка, справка по пробам. Вся скважина — в Excel
+          многолистовым файлом. Статистика участка обновляется автоматически.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="section" id="tech">
+  <div class="container">
+    <div class="reveal">
+      <div class="label">Технологии и надёжность</div>
+      <h2>Работает везде<br><span class="grad">и не подводит</span></h2>
+      <p class="lead">
+        В поле, на вахте, в офисе — оффлайн, без сервера, на слабом железе.
+        Данные надёжно сохраняются, версии контролируются.
+      </p>
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech reveal">
+        <div class="tech__ico">📡</div>
+        <div class="tech__title">Работает оффлайн</div>
+        <div class="tech__text">Никакого интернета и сервера. Поле, вахта, удалённый участок — везде одинаково.</div>
+      </div>
+      <div class="tech reveal reveal-d1">
+        <div class="tech__ico">💻</div>
+        <div class="tech__title">Планшет + ПК</div>
+        <div class="tech__text">Geo и Drill — на планшете. Station — на рабочем ПК. Один формат данных везде.</div>
+      </div>
+      <div class="tech reveal reveal-d2">
+        <div class="tech__ico">💾</div>
+        <div class="tech__title">Ничего не теряется</div>
+        <div class="tech__text">Автосохранение каждые секунды, 5 резервных копий, ежедневные снапшоты, откат в один клик.</div>
+      </div>
+      <div class="tech reveal">
+        <div class="tech__ico">📚</div>
+        <div class="tech__title">Справочники на ходу</div>
+        <div class="tech__text">Даже в поле — новая порода или минерал в один клик. Сразу во всех выпадающих списках.</div>
+      </div>
+      <div class="tech reveal reveal-d1">
+        <div class="tech__ico">🎨</div>
+        <div class="tech__title">Крапы под участок</div>
+        <div class="tech__text">Стандартная библиотека + свой крап для каждой породы. Превью, сохранение в проекте.</div>
+      </div>
+      <div class="tech reveal reveal-d2">
+        <div class="tech__ico">📄</div>
+        <div class="tech__title">PDF и Excel везде</div>
+        <div class="tech__text">Печать в PDF с правильными размерами A4/A3. Выгрузка в Excel — без установленного Office.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="cta" id="contact">
+  <div class="cta__contours" aria-hidden="true">
+    <svg viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke="#7dd3fc" stroke-opacity=".12" stroke-width=".8">
+        <path d="M 200 400 C 350 300, 500 350, 600 450 S 700 600, 550 700 S 250 650, 200 500 S 150 450, 200 400 Z"/>
+        <path d="M 250 420 C 380 340, 500 380, 580 470 S 660 590, 540 660 S 300 620, 260 510 S 220 450, 250 420 Z"/>
+        <path d="M 900 300 C 1050 220, 1220 300, 1280 450 S 1240 680, 1080 700 S 850 650, 830 500 S 830 350, 900 300 Z"/>
+        <path d="M 950 340 C 1080 280, 1200 340, 1240 460 S 1210 640, 1090 660 S 900 620, 880 500 S 880 380, 950 340 Z"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="cta__inner">
+    <h2>Готовы перевести участок<br>на <span class="grad">CoreKit</span>?</h2>
+    <p class="cta__sub">
+      Свяжитесь с разработчиком, чтобы обсудить внедрение, обучение сотрудников
+      или расширение под задачи вашего участка.
+    </p>
+    <div class="hero__actions" style="justify-content:center;">
+      <a href="mailto:info@corekit-geo.ru" class="btn btn--primary magnetic">
+        ✉ Написать нам
+      </a>
+      <a href="#products" class="btn btn--ghost magnetic">
+        Посмотреть продукты
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<footer class="footer">
+  <div class="map-legend">
+    <div class="map-legend__title">Легенда участка</div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--soil"></span>
+      Почвенно-растительный слой
+    </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--clay"></span>
+      Глины / аргиллиты
+    </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--rock"></span>
+      Скальные породы
+    </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--sand"></span>
+      Песчаники / алевролиты
+    </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--ore"></span>
+      Рудная минерализация
+    </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--drill"></span>
+      Скважина · DH-104
+    </div>
+  </div>
+
+  <div class="footer__inner">
+    <div>
+      <div class="footer__brand">
+        <div class="nav__logo-mark" style="box-shadow:none;">🧭</div>
+        Core<span>Kit</span>
+      </div>
+      <p class="footer__desc">
+        Экосистема оффлайн-приложений для геологоразведки: документация керна,
+        буровые журналы, камеральная обработка и отчётность.
+      </p>
+    </div>
+    <div class="footer__col">
+      <h4>Продукты</h4>
+      <ul>
+        <li><a href="#geo">CoreKit Geo</a></li>
+        <li><a href="#drill">CoreKit Drill</a></li>
+        <li><a href="#station">CoreKit Station</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <h4>Возможности</h4>
+      <ul>
+        <li><a href="#docs">Полевой журнал</a></li>
+        <li><a href="#docs">Геологическая колонка</a></li>
+        <li><a href="#station">Верификация</a></li>
+        <li><a href="#station">Проверка участка</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <h4>Компания</h4>
+      <ul>
+        <li><a href="#contact">Связаться</a></li>
+        <li><a href="#">Документация</a></li>
+        <li><a href="#">Руководство пользователя</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>© CoreKit, 2026. Все права защищены.</span>
+    <span>Сайт не использует cookie и не собирает персональные данные.</span>
+  </div>
+</footer>
+
+<!-- ============================================================ -->
+<button class="to-top" id="toTop" aria-label="Наверх">↑</button>
+
+<!-- ============================================================ -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lightbox__caption" id="lightboxCaption"></div>
+  <button class="lightbox__close" id="lightboxClose" aria-label="Закрыть">✕</button>
+  <img class="lightbox__img" id="lightboxImg" alt="">
+  <div class="lightbox__hint">Esc или клик — закрыть</div>
+</div>
+
+<script>
+/* ============================================================
+   PRELOADER + запуск рисования изолиний
+   ============================================================ */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('preloader').classList.add('is-done');
+    document.documentElement.classList.remove('is-loading');
+
+    const topoSVG = document.getElementById('topoSVG');
+    if(topoSVG) topoSVG.classList.add('is-drawing');
+
+    document.querySelectorAll('.side-contours').forEach(el => {
+      el.classList.add('is-visible');
+    });
+  }, 1400);
+});
+
+/* ============================================================
+   CURSOR
+   ============================================================ */
+const isTouch = window.matchMedia('(hover: none)').matches;
+if(isTouch) document.body.classList.add('is-touch');
+
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+let mouseX = 0, mouseY = 0;
+let ringX = 0, ringY = 0;
+
+if(!isTouch){
+  window.addEventListener('mousemove', e => {
+    mouseX = e.clientX; mouseY = e.clientY;
+    cursor.style.left = mouseX + 'px';
+    cursor.style.top = mouseY + 'px';
+  }, {passive: true});
+
+  const hoverTargets = 'a, button, .product, .tech, .doc-card, .sticky-step, .timeline__item, .visual-frame, .btn';
+  document.querySelectorAll(hoverTargets).forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('is-hover');
+      cursorRing.classList.add('is-hover');
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('is-hover');
+      cursorRing.classList.remove('is-hover');
+    });
+  });
+
+  (function loop(){
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    cursorRing.style.left = ringX + 'px';
+    cursorRing.style.top = ringY + 'px';
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ============================================================
+   PROGRESS + NAV
+   ============================================================ */
+const progressFill = document.getElementById('progressFill');
+const nav = document.getElementById('nav');
+const navLinks = document.querySelectorAll('.nav__menu a[href^="#"]');
+const sections = [...document.querySelectorAll('section[id]')];
+
+function updateScroll(){
+  const h = document.documentElement;
+  const scrolled = h.scrollTop;
+  const total = h.scrollHeight - h.clientHeight;
+  const pct = total > 0 ? (scrolled / total) * 100 : 0;
+  progressFill.style.width = pct + '%';
+
+  if(window.scrollY > 40) nav.classList.add('is-scrolled');
+  else nav.classList.remove('is-scrolled');
+
+  let current = '';
+  sections.forEach(s => {
+    const top = s.offsetTop - 120;
+    if(window.scrollY >= top) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('is-active', a.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', updateScroll, {passive: true});
+updateScroll();
+
+/* ============================================================
+   TO TOP
+   ============================================================ */
+const toTop = document.getElementById('toTop');
+window.addEventListener('scroll', () => {
+  toTop.classList.toggle('is-visible', window.scrollY > 800);
+}, {passive: true});
+toTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+
+/* ============================================================
+   REVEAL
+   ============================================================ */
+const revealIO = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('is-visible');
+      revealIO.unobserve(e.target);
+    }
+  });
+}, {threshold: 0.12, rootMargin: '0px 0px -60px 0px'});
+document.querySelectorAll('.reveal, .timeline__item').forEach(el => revealIO.observe(el));
+
+/* ============================================================
+   COUNTERS
+   ============================================================ */
+const counterIO = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    counterIO.unobserve(e.target);
+    const el = e.target;
+    const target = parseFloat(el.dataset.count);
+    const duration = parseInt(el.dataset.duration || '1600', 10);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const start = performance.now();
+    (function tick(now){
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 4);
+      const val = target * eased;
+      const display = target % 1 === 0 ? Math.round(val) : val.toFixed(1);
+      el.textContent = prefix + display + suffix;
+      if(t < 1) requestAnimationFrame(tick);
+      else el.textContent = prefix + target + suffix;
+    })(start);
+  });
+}, {threshold: 0.5});
+document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
+
+/* ============================================================
+   MAGNETIC
+   ============================================================ */
+if(!isTouch){
+  document.querySelectorAll('.magnetic').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width / 2;
+      const y = e.clientY - r.top - r.height / 2;
+      btn.style.transform = `translate(${x * 0.25}px, ${y * 0.35}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+  });
+}
+
+/* ============================================================
+   3D TILT
+   ============================================================ */
+if(!isTouch){
+  document.querySelectorAll('.tilt').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const mx = (e.clientX - r.left) / r.width;
+      const my = (e.clientY - r.top) / r.height;
+      const rx = (my - 0.5) * -8;
+      const ry = (mx - 0.5) * 8;
+      card.style.transform = `perspective(1200px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-6px)`;
+      card.style.setProperty('--mx', (mx * 100) + '%');
+      card.style.setProperty('--my', (my * 100) + '%');
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+}
+
+/* ============================================================
+   MARQUEE
+   ============================================================ */
+const marqueeTrack = document.getElementById('marqueeTrack');
+const marqueeItems = [
+  'Оффлайн', 'Без сервера', 'Планшет + ПК', 'Обмен JSON',
+  'Полевой журнал A3', 'Геологическая колонка', 'Валидация',
+  'Верификация', 'Проверка участка', 'Каталог проб',
+  'Импорт CSV лаборатории', 'Cut-off', 'Справочники на ходу',
+  'Крапы пород', 'PDF и Excel'
+];
+const marqueeHTML = marqueeItems.map(t => `<span class="marquee__item">${t}</span>`).join('');
+marqueeTrack.innerHTML = marqueeHTML + marqueeHTML;
+
+/* ============================================================
+   STICKY SHOWCASE — универсальная логика
+   ============================================================ */
+function setupStickyShowcase(stackId, stepsSelector, labelId, frameLabels){
+  const frameStack = document.getElementById(stackId);
+  if(!frameStack) return;
+  const frameImgs = frameStack.querySelectorAll('img');
+  const frameLabel = document.getElementById(labelId);
+
+  frameImgs.forEach(img => {
+    img.addEventListener('load', () => {
+      img.dataset.failed = '0';
+      frameStack.classList.add('has-loaded');
+    });
+    img.addEventListener('error', () => {
+      img.dataset.failed = '1';
+      img.style.display = 'none';
+    });
+    if(img.complete){
+      if(img.naturalWidth === 0){
+        img.dataset.failed = '1';
+        img.style.display = 'none';
+      } else {
+        img.dataset.failed = '0';
+        frameStack.classList.add('has-loaded');
+      }
+    }
+  });
+
+  const steps = document.querySelectorAll(stepsSelector);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      const idx = parseInt(e.target.dataset.scene, 10);
+      if(e.isIntersecting){
+        frameImgs.forEach((img, i) => {
+          const isActive = i === idx;
+          const isBroken = img.dataset.failed === '1';
+          img.classList.toggle('is-active', isActive && !isBroken);
+        });
+        if(frameLabels && frameLabels[idx] && frameLabel){
+          frameLabel.textContent = frameLabels[idx];
+        }
+        const fill = e.target.querySelector('.sticky-progress__fill');
+        if(fill) fill.style.height = '100%';
+      } else {
+        const fill = e.target.querySelector('.sticky-progress__fill');
+        if(fill) fill.style.height = '0%';
+      }
+    });
+  }, {threshold: 0.6, rootMargin: '-20% 0px -30% 0px'});
+  steps.forEach(s => io.observe(s));
+}
+
+setupStickyShowcase(
+  'geoFrameStack',
+  '#geo .sticky-step',
+  'geoFrameLabel',
+  ['geo.html · Литология', 'geo.html · Дашборд', 'geo.html · Опробование', 'geo.html · Валидация']
+);
+
+setupStickyShowcase(
+  'drillFrameStack',
+  '#drill .sticky-step',
+  'drillFrameLabel',
+  ['drill.html · Рейсы', 'drill.html · Карточка рейса', 'drill.html · Дашборд']
+);
+
+setupStickyShowcase(
+  'stationFrameStack',
+  '#station .sticky-step',
+  'stationFrameLabel',
+  ['station.html · Реестр скважин', 'station.html · Каталог проб', 'station.html · Статистика участка', 'station.html · Акт верификации', 'station.html · Проверка участка', 'station.html · Отчёты']
+);
+
+/* ============================================================
+   FALLBACK документов
+   ============================================================ */
+document.querySelectorAll('.doc-shot-img').forEach(img => {
+  const showPlaceholder = () => {
+    img.style.display = 'none';
+    const ph = img.nextElementSibling;
+    if(ph && ph.classList.contains('ph')) ph.classList.add('is-show');
+  };
+  img.addEventListener('error', showPlaceholder);
+  if(img.complete && img.naturalWidth === 0) showPlaceholder();
+});
+
+/* ============================================================
+   LIGHTBOX
+   ============================================================ */
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+const lightboxCaption = document.getElementById('lightboxCaption');
+const lightboxClose = document.getElementById('lightboxClose');
+
+function openLightbox(src, caption){
+  if(!src) return;
+  lightboxImg.src = src;
+  lightboxCaption.textContent = caption || '';
+  lightbox.classList.add('is-open');
+  lightbox.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(){
+  lightbox.classList.remove('is-open');
+  lightbox.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  setTimeout(() => { lightboxImg.src = ''; }, 400);
+}
+
+document.querySelectorAll('.visual-frame__stack, .doc-card__shot').forEach(container => {
+  container.addEventListener('click', e => {
+    // В стеке берём активную картинку; в doc-card — единственную
+    const img = container.querySelector('img.is-active')
+             || container.querySelector('img:not([data-failed="1"])');
+    if(!img) return;
+    if(img.dataset.failed === '1') return;
+    if(img.complete && img.naturalWidth === 0) return;
+    if(!img.src) return;
+    if(img.style.display === 'none') return;
+    e.preventDefault();
+    openLightbox(img.src, img.alt || 'CoreKit');
+  });
+});
+
+lightbox.addEventListener('click', e => {
+  if(e.target === lightboxImg) return;
+  closeLightbox();
+});
+lightboxClose.addEventListener('click', e => {
+  e.stopPropagation();
+  closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && lightbox.classList.contains('is-open')){
+    closeLightbox();
+  }
+});
+
+/* ============================================================
+   SMOOTH SCROLL
+   ============================================================ */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if(href === '#') return;
+    const target = document.querySelector(href);
+    if(!target) return;
+    e.preventDefault();
+    const y = target.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({top: y, behavior: 'smooth'});
+  });
+});
+
+/* ============================================================
+   МЕРЦАНИЕ УГЛОВ
+   ============================================================ */
+const corners = document.querySelectorAll('.map-corner');
+setInterval(() => {
+  corners.forEach(c => {
+    if(Math.random() > 0.75){
+      c.style.opacity = '.3';
+      setTimeout(() => { c.style.opacity = '.55'; }, 200);
+    }
+  });
+}, 2400);
+
+/* ============================================================
+   ПАРАЛЛАКС
+   ============================================================ */
+const topoLayer = document.querySelector('.topo-layer');
+if(!isTouch && topoLayer){
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if(y > window.innerHeight * 1.5) return;
+    topoLayer.style.transform = `translateY(${y * 0.25}px)`;
+  }, {passive: true});
+}
+
+if(!isTouch){
+  const markers = document.querySelectorAll('.drill-marker');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if(y > window.innerHeight) return;
+    markers.forEach((m, i) => {
+      m.style.transform = `translateY(${y * (0.1 + i * 0.03)}px)`;
+    });
+  }, {passive: true});
+}
+</script>
+</body>
+</html>

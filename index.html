@@ -928,7 +928,6 @@
     pointer-events:auto;
   }
   .visual-frame__stack img[data-failed="1"]{display:none !important;}
-  .visual-frame__stack img[data-failed="1"]{display:none !important;}
   .visual-frame__ph{
     position:absolute;inset:0;z-index:1;
     display:flex;flex-direction:column;
@@ -978,6 +977,44 @@
     transition:height .3s;
   }
   @media(max-width:1024px){.sticky-progress{display:none;}}
+
+  /* ============================================================
+     МОБИЛЬНАЯ ГАЛЕРЕЯ ВНУТРИ ШАГОВ
+     ============================================================ */
+  .step-image-mobile-wrap{
+    display:none;
+    position:relative;
+    margin:0 0 22px 0;
+    border-radius:14px;
+    overflow:hidden;
+    background:linear-gradient(160deg,#1e293b,#0f172a);
+    border:1px solid var(--line-2);
+    box-shadow:0 12px 32px rgba(0,0,0,.4);
+    cursor:zoom-in;
+  }
+  .step-image-mobile-wrap img{
+    width:100%;
+    height:auto;
+    display:block;
+    aspect-ratio:16/10;
+    object-fit:cover;
+  }
+  .step-image-mobile-wrap::after{
+    content:"🔍 Увеличить";
+    position:absolute;
+    bottom:10px;right:10px;
+    padding:6px 12px;
+    border-radius:20px;
+    background:rgba(5,8,16,.85);
+    border:1px solid rgba(125,211,252,.4);
+    color:var(--cyan);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.04em;
+    pointer-events:none;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
 
   /* ============================================================
      TIMELINE
@@ -1417,6 +1454,21 @@
   }
 
   /* ============================================================
+     МОБИЛЬНЫЕ ПРАВКИ STICKY-СЕКЦИЙ — скриншот прикреплён к шагу
+     ============================================================ */
+  @media(max-width:1024px){
+    /* Прячем sticky-колонку со скриншотами */
+    .sticky-col--visual{display:none;}
+
+    /* Показываем скриншот внутри каждого шага */
+    .step-image-mobile-wrap{display:block;}
+
+    /* Компактнее отступы для мобильных */
+    .sticky-col--text{gap:24px;}
+    .sticky-step{padding:26px 0 20px;}
+  }
+
+  /* ============================================================
      REDUCED MOTION
      ============================================================ */
   @media(prefers-reduced-motion:reduce){
@@ -1800,6 +1852,9 @@
       <div class="sticky-step sticky-step--geo" data-scene="0">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Geo · 01</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/geo-lithology.png" alt="CoreKit Geo — Литология">
+        </div>
         <h3 class="sticky-step__title">Полный цикл документации керна</h3>
         <p class="sticky-step__text">
           Все разделы в одной программе, в привычной последовательности.
@@ -1817,6 +1872,9 @@
       <div class="sticky-step sticky-step--geo" data-scene="1">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Geo · 02</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/geo-dashboard.png" alt="CoreKit Geo — Дашборд скважины">
+        </div>
         <h3 class="sticky-step__title">Дашборд скважины в реальном времени</h3>
         <p class="sticky-step__text">
           Живая аналитика по скважине: сколько пробурено, средний выход керна,
@@ -1833,6 +1891,9 @@
       <div class="sticky-step sticky-step--geo" data-scene="2">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Geo · 03</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/geo-samples.png" alt="CoreKit Geo — Опробование">
+        </div>
         <h3 class="sticky-step__title">Опробование и сводное описание</h3>
         <p class="sticky-step__text">
           Пакетное создание проб одной кнопкой, авто-привязка литологии к каждой пробе,
@@ -1849,6 +1910,9 @@
       <div class="sticky-step sticky-step--geo" data-scene="3">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Geo · 04</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/geo-validation.png" alt="CoreKit Geo — Валидация данных">
+        </div>
         <h3 class="sticky-step__title">Живая валидация прямо у ящика</h3>
         <p class="sticky-step__text">
           Программа проверяет данные по мере ввода — задолго до офиса. Ошибки
@@ -1906,6 +1970,9 @@
       <div class="sticky-step sticky-step--drill" data-scene="0">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Drill · 01</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/drill-runs.png" alt="CoreKit Drill — Рейсы">
+        </div>
         <h3 class="sticky-step__title">Рейсы и тех. режим по сменам</h3>
         <p class="sticky-step__text">
           Электронный буровой журнал мастера. Каждый рейс — дата, смена, интервалы,
@@ -1922,6 +1989,9 @@
       <div class="sticky-step sticky-step--drill" data-scene="1">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Drill · 02</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/drill-run-card.png" alt="CoreKit Drill — Карточка рейса">
+        </div>
         <h3 class="sticky-step__title">Карточка рейса с операциями</h3>
         <p class="sticky-step__text">
           Развёрнутая карточка рейса: интервалы, тех. режим, промывочная жидкость,
@@ -1939,6 +2009,9 @@
       <div class="sticky-step sticky-step--drill" data-scene="2">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Drill · 03</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/drill-dashboard.png" alt="CoreKit Drill — Дашборд">
+        </div>
         <h3 class="sticky-step__title">Комментарии геолога и дашборд</h3>
         <p class="sticky-step__text">
           Геолог оставляет комментарии с приоритетом и статусом — мастер видит их
@@ -2001,6 +2074,9 @@
       <div class="sticky-step sticky-step--station" data-scene="0">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 01</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-registry.png" alt="CoreKit Station — Реестр скважин">
+        </div>
         <h3 class="sticky-step__title">Реестр скважин участка</h3>
         <p class="sticky-step__text">
           Все скважины в одной таблице: номер, статус, глубины, даты, геолог,
@@ -2017,6 +2093,9 @@
       <div class="sticky-step sticky-step--station" data-scene="1">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 02</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-catalog.png" alt="CoreKit Station — Каталог проб">
+        </div>
         <h3 class="sticky-step__title">Каталог проб и анализов</h3>
         <p class="sticky-step__text">
           Все пробы со всех скважин в одной таблице. Импорт результатов из CSV
@@ -2034,6 +2113,9 @@
       <div class="sticky-step sticky-step--station" data-scene="2">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 03</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-stats.png" alt="CoreKit Station — Статистика участка">
+        </div>
         <h3 class="sticky-step__title">Сводная статистика участка</h3>
         <p class="sticky-step__text">
           Полная аналитика по метражу, породам, метасоматозу и содержаниям.
@@ -2051,6 +2133,9 @@
       <div class="sticky-step sticky-step--station" data-scene="3">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 04</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-verify.png" alt="CoreKit Station — Верификация">
+        </div>
         <h3 class="sticky-step__title">Верификация и акт верификации</h3>
         <p class="sticky-step__text">
           Второй уровень контроля после полевой валидации. Чек-лист по каждому
@@ -2068,6 +2153,9 @@
       <div class="sticky-step sticky-step--station" data-scene="4">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 05</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-check.png" alt="CoreKit Station — Проверка участка">
+        </div>
         <h3 class="sticky-step__title">Проверка участка — сквозной контроль</h3>
         <p class="sticky-step__text">
           Автоматический поиск проблем не в одной скважине, а по всему участку.
@@ -2087,6 +2175,9 @@
       <div class="sticky-step sticky-step--station" data-scene="5">
         <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
         <div class="sticky-step__num">Station · 06</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/station-reports.png" alt="CoreKit Station — Отчёты">
+        </div>
         <h3 class="sticky-step__title">Отчёты A4 и Excel</h3>
         <p class="sticky-step__text">
           Готовые официальные формы для сдачи. Реестры, сводки, справки, акты —
@@ -2697,9 +2788,9 @@ function closeLightbox(){
   setTimeout(() => { lightboxImg.src = ''; }, 400);
 }
 
+/* Клик по стеку в sticky-колонке и по документам */
 document.querySelectorAll('.visual-frame__stack, .doc-card__shot').forEach(container => {
   container.addEventListener('click', e => {
-    // В стеке берём активную картинку; в doc-card — единственную
     const img = container.querySelector('img.is-active')
              || container.querySelector('img:not([data-failed="1"])');
     if(!img) return;
@@ -2707,6 +2798,23 @@ document.querySelectorAll('.visual-frame__stack, .doc-card__shot').forEach(conta
     if(img.complete && img.naturalWidth === 0) return;
     if(!img.src) return;
     if(img.style.display === 'none') return;
+    e.preventDefault();
+    openLightbox(img.src, img.alt || 'CoreKit');
+  });
+});
+
+/* Клик по мобильным скриншотам внутри шагов */
+document.querySelectorAll('.step-image-mobile-wrap').forEach(wrap => {
+  const img = wrap.querySelector('img');
+  if(!img) return;
+
+  const hideOnError = () => { wrap.style.display = 'none'; };
+  img.addEventListener('error', hideOnError);
+  if(img.complete && img.naturalWidth === 0) hideOnError();
+
+  wrap.addEventListener('click', e => {
+    if(img.complete && img.naturalWidth === 0) return;
+    if(!img.src) return;
     e.preventDefault();
     openLightbox(img.src, img.alt || 'CoreKit');
   });
