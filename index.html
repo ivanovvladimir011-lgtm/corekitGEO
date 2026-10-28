@@ -17,6 +17,7 @@
     --cyan:#7dd3fc;
     --cyan-2:#22d3ee;
     --purple:#a78bfa;
+    --green:#4ade80;
     --grad-main:linear-gradient(135deg,#7dd3fc,#22d3ee 40%,#a78bfa);
   }
   html{scroll-behavior:smooth;}
@@ -54,7 +55,7 @@
   }
 
   /* ============================================================
-     БОКОВЫЕ ИЗОЛИНИИ — fixed, видны на всём скролле
+     БОКОВЫЕ ИЗОЛИНИИ
      ============================================================ */
   .side-contours{
     position:fixed;
@@ -78,9 +79,7 @@
     left:0;
     animation:driftContours 90s linear infinite;
   }
-  .side-contours--right svg{
-    transform:scaleX(-1);
-  }
+  .side-contours--right svg{transform:scaleX(-1);}
   @keyframes driftContours{
     from{translate:0 0;}
     to{translate:0 -25%;}
@@ -93,9 +92,7 @@
   }
   .side-contour--accent{stroke:var(--purple);stroke-opacity:.26;}
   .side-contour--dense{stroke-opacity:.12;stroke-width:.6;}
-  @media(max-width:1280px){
-    .side-contours{display:none;}
-  }
+  @media(max-width:1280px){.side-contours{display:none;}}
 
   /* ============================================================
      PRELOADER
@@ -234,9 +231,11 @@
     margin-left:8px;
     box-shadow:0 4px 20px rgba(125,211,252,.35);
   }
+  @media(max-width:1100px){
+    .nav__menu a:not(.nav__cta){display:none;}
+  }
   @media(max-width:900px){
     .nav,.nav.is-scrolled{padding:14px 20px;}
-    .nav__menu a:not(.nav__cta){display:none;}
   }
 
   /* ============================================================
@@ -471,9 +470,9 @@
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.6);}}
 
   .hero__title{
-    font-size:clamp(42px,8vw,110px);
+    font-size:clamp(42px,7vw,96px);
     line-height:.96;font-weight:900;
-    letter-spacing:-4px;margin:0 0 32px;
+    letter-spacing:-3px;margin:0 0 32px;
     text-shadow:0 0 80px rgba(5,8,16,.9);
   }
   .hero__title-line{display:block;overflow:hidden;padding:0 .1em;}
@@ -505,7 +504,7 @@
   .hero__sub{
     font-size:clamp(16px,1.8vw,20px);
     line-height:1.55;
-    max-width:640px;margin:0 auto 44px;
+    max-width:680px;margin:0 auto 44px;
     color:var(--muted);
     animation:fadeUp 1s .9s cubic-bezier(.7,0,.3,1) both;
   }
@@ -577,7 +576,7 @@
   }
 
   /* ============================================================
-     MARQUEE — фон полупрозрачный
+     MARQUEE
      ============================================================ */
   .marquee{
     padding:32px 0;
@@ -603,7 +602,7 @@
   }
   .marquee__track{
     display:inline-flex;
-    animation:marquee 40s linear infinite;
+    animation:marquee 45s linear infinite;
   }
   .marquee__item{
     display:inline-flex;align-items:center;gap:32px;
@@ -633,7 +632,7 @@
   .strata-divider--flip svg{transform:scaleY(-1);}
 
   /* ============================================================
-     СЕКЦИИ — фон полупрозрачный, чтобы изолинии просвечивали
+     СЕКЦИИ
      ============================================================ */
   .section{
     padding:140px 40px;
@@ -680,7 +679,7 @@
   .reveal-d3{transition-delay:.3s;}
 
   /* ============================================================
-     STATS — полупрозрачный фон
+     STATS
      ============================================================ */
   .stats{
     padding:100px 40px;
@@ -728,21 +727,23 @@
   @media(max-width:900px){.stats__grid{grid-template-columns:repeat(2,1fr);}}
 
   /* ============================================================
-     PRODUCTS
+     PRODUCTS (4 шт)
      ============================================================ */
   .products{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:20px;
     perspective:1400px;
   }
   .product{
     position:relative;border-radius:24px;
-    padding:44px 36px;
+    padding:36px 28px;
     background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
     border:1px solid var(--line);
     overflow:hidden;
     transition:transform .5s cubic-bezier(.7,0,.3,1), border-color .5s;
     transform-style:preserve-3d;
-    min-height:400px;display:flex;flex-direction:column;
+    min-height:420px;display:flex;flex-direction:column;
   }
   .product::before{
     content:"";position:absolute;inset:0;border-radius:24px;
@@ -761,10 +762,10 @@
   }
   .product:hover::after{opacity:1;}
   .product__ico{
-    width:72px;height:72px;border-radius:20px;
+    width:64px;height:64px;border-radius:16px;
     background:var(--accent-bg);
     display:grid;place-items:center;
-    font-size:34px;margin-bottom:28px;
+    font-size:30px;margin-bottom:24px;
     transition:transform .5s cubic-bezier(.7,0,.3,1);
     box-shadow:0 0 0 1px var(--accent) inset,0 20px 40px rgba(0,0,0,.3);
   }
@@ -772,31 +773,35 @@
     transform:translateZ(30px) rotate(-8deg) scale(1.06);
   }
   .product__role{
-    font-size:11px;font-weight:800;
-    letter-spacing:2px;text-transform:uppercase;
-    color:var(--accent);margin-bottom:10px;
+    font-size:10px;font-weight:800;
+    letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:8px;
   }
   .product__title{
-    font-size:28px;font-weight:900;
-    letter-spacing:-.8px;color:var(--text);
-    margin:0 0 16px;
+    font-size:22px;font-weight:900;
+    letter-spacing:-.5px;color:var(--text);
+    margin:0 0 14px;
   }
   .product__desc{
-    font-size:15px;line-height:1.6;
+    font-size:14px;line-height:1.55;
     color:var(--muted);flex:1;
   }
   .product__more{
-    margin-top:24px;
+    margin-top:20px;
     display:inline-flex;align-items:center;gap:10px;
-    font-size:14px;font-weight:700;
+    font-size:13px;font-weight:700;
     color:var(--accent);
     transition:gap .35s cubic-bezier(.7,0,.3,1);
   }
   .product:hover .product__more{gap:16px;}
+  
   .product--geo{--accent:#fbbf24;--accent-bg:rgba(251,191,36,.12);}
   .product--drill{--accent:#ec4899;--accent-bg:rgba(236,72,153,.12);}
   .product--station{--accent:#7dd3fc;--accent-bg:rgba(125,211,252,.12);}
-  @media(max-width:1024px){.products{grid-template-columns:1fr;}}
+  .product--trench{--accent:#4ade80;--accent-bg:rgba(74,222,128,.12);}
+
+  @media(max-width:1100px){.products{grid-template-columns:repeat(2, 1fr);}}
+  @media(max-width:640px){.products{grid-template-columns:1fr;}}
 
   /* ============================================================
      STICKY SHOWCASE
@@ -815,6 +820,7 @@
   .sticky-section--geo{--accent:#fbbf24;--accent-bg:rgba(251,191,36,.05);}
   .sticky-section--drill{--accent:#ec4899;--accent-bg:rgba(236,72,153,.05);}
   .sticky-section--station{--accent:#7dd3fc;--accent-bg:rgba(125,211,252,.05);}
+  .sticky-section--trench{--accent:#4ade80;--accent-bg:rgba(74,222,128,.05);}
 
   .sticky-inner{
     position:relative;
@@ -874,6 +880,7 @@
   .sticky-step--geo{--accent:#fbbf24;}
   .sticky-step--drill{--accent:#ec4899;}
   .sticky-step--station{--accent:#7dd3fc;}
+  .sticky-step--trench{--accent:#4ade80;}
 
   /* ============================================================
      FRAME
@@ -914,7 +921,9 @@
   }
   .visual-frame__stack img{
     position:absolute;inset:0;
-    width:100%;height:100%;object-fit:cover;
+    width:100%;height:100%;object-fit:contain;
+    background:#070a14;
+    padding:10px;
     opacity:0;
     z-index:2;
     pointer-events:none;
@@ -997,7 +1006,9 @@
     height:auto;
     display:block;
     aspect-ratio:16/10;
-    object-fit:cover;
+    object-fit:contain;
+    background:#070a14;
+    padding:10px;
   }
   .step-image-mobile-wrap::after{
     content:"🔍 Увеличить";
@@ -1062,7 +1073,8 @@
   .tag-geo{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
   .tag-drill{background:rgba(236,72,153,.12);color:#ec4899;border:1px solid rgba(236,72,153,.25);}
   .tag-station{background:rgba(125,211,252,.12);color:#7dd3fc;border:1px solid rgba(125,211,252,.25);}
-  .tag-office{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+  .tag-trench{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
+  .tag-office{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line);}
   .timeline__title{
     font-size:clamp(22px,2.8vw,32px);
     font-weight:900;letter-spacing:-.6px;
@@ -1345,6 +1357,16 @@
     transform:translate(-50%,-50%);
     box-shadow:0 0 8px var(--cyan);
   }
+  .map-legend__swatch--trench{
+    background:#050810;border-color:var(--green);
+  }
+  .map-legend__swatch--trench::before{
+    content:"";position:absolute;top:50%;left:20%;
+    width:60%;height:3px;
+    background:var(--green);
+    transform:translateY(-50%);
+    box-shadow:0 0 8px var(--green);
+  }
   @media(max-width:900px){
     .map-legend{grid-template-columns:1fr 1fr;gap:16px 20px;padding:20px;}
     .map-legend__title{
@@ -1411,6 +1433,7 @@
     transform:scale(.94);
     transition:transform .45s cubic-bezier(.7,0,.3,1);
     cursor:default;
+    background:#070a14;
   }
   .lightbox.is-open .lightbox__img{transform:scale(1);}
   .lightbox__close{
@@ -1454,16 +1477,11 @@
   }
 
   /* ============================================================
-     МОБИЛЬНЫЕ ПРАВКИ STICKY-СЕКЦИЙ — скриншот прикреплён к шагу
+     МОБИЛЬНЫЕ ПРАВКИ STICKY-СЕКЦИЙ
      ============================================================ */
   @media(max-width:1024px){
-    /* Прячем sticky-колонку со скриншотами */
     .sticky-col--visual{display:none;}
-
-    /* Показываем скриншот внутри каждого шага */
     .step-image-mobile-wrap{display:block;}
-
-    /* Компактнее отступы для мобильных */
     .sticky-col--text{gap:24px;}
     .sticky-step{padding:26px 0 20px;}
   }
@@ -1489,8 +1507,6 @@
 <!-- ============================================================ -->
 <div class="page-grid"></div>
 
-<!-- ============================================================ -->
-<!-- БОКОВЫЕ ИЗОЛИНИИ -->
 <!-- ============================================================ -->
 <div class="side-contours side-contours--left" aria-hidden="true">
   <svg id="sideContoursLeft" viewBox="0 0 400 2400" preserveAspectRatio="xMinYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -1574,8 +1590,8 @@
     <a href="#geo">Geo</a>
     <a href="#drill">Drill</a>
     <a href="#station">Station</a>
+    <a href="#trench">Trench</a>
     <a href="#docs">Документы</a>
-    <a href="#scenario">Сценарий</a>
     <a href="#contact" class="nav__cta">Обсудить</a>
   </div>
 </nav>
@@ -1629,7 +1645,7 @@
     </div>
     <div class="drill-marker">
       <span class="drill-marker__dot"></span>
-      <span class="drill-marker__label">DH-103 <span class="drill-marker__depth">/ 156 м</span></span>
+      <span class="drill-marker__label">TR-05 <span class="drill-marker__depth">/ 25 м</span></span>
     </div>
     <div class="drill-marker">
       <span class="drill-marker__dot"></span>
@@ -1637,7 +1653,7 @@
     </div>
     <div class="drill-marker">
       <span class="drill-marker__dot"></span>
-      <span class="drill-marker__label">DH-105 <span class="drill-marker__depth">/ 110 м</span></span>
+      <span class="drill-marker__label">TR-06 <span class="drill-marker__depth">/ 15 м</span></span>
     </div>
   </div>
 
@@ -1684,13 +1700,13 @@
 
     <h1 class="hero__title">
       <span class="hero__title-line"><span>Документация</span></span>
-      <span class="hero__title-line"><span>керна <em class="outline">без бумаги</em></span></span>
+      <span class="hero__title-line"><span>керна и канав <em class="outline">без бумаги</em></span></span>
       <span class="hero__title-line"><span class="grad">и Excel</span></span>
     </h1>
 
     <p class="hero__sub">
-      Экосистема из трёх приложений, которая закрывает весь цикл геологоразведки —
-      от кернового ящика в поле до сдачи итоговой документации в офисе.
+      Экосистема из четырёх приложений, которая закрывает весь цикл геологоразведки —
+      от кернового ящика и канавы в поле до сдачи итоговой документации в офисе.
     </p>
 
     <div class="hero__actions">
@@ -1719,7 +1735,7 @@
 <section class="stats">
   <div class="stats__grid">
     <div class="stat reveal">
-      <div class="stat__value" data-count="3" data-duration="1500">0</div>
+      <div class="stat__value" data-count="4" data-duration="1500">0</div>
       <div class="stat__label">программы в экосистеме</div>
     </div>
     <div class="stat reveal reveal-d1">
@@ -1776,11 +1792,11 @@
 <section class="section" id="products">
   <div class="container">
     <div class="reveal">
-      <div class="label">Три программы — один маршрут</div>
+      <div class="label">Четыре программы — один маршрут</div>
       <h2>Из поля — в камералку,<br><span class="grad">без потерь и переписки</span></h2>
       <p class="lead">
         Геолог документирует керн в поле, буровой мастер ведёт смены и рейсы,
-        ведущий геолог в офисе собирает всё вместе и превращает в готовые документы.
+        горный мастер описывает канавы, а ведущий геолог в офисе собирает всё вместе и превращает в готовые документы.
       </p>
     </div>
 
@@ -1790,8 +1806,7 @@
         <div class="product__role">Поле · Геолог</div>
         <div class="product__title">CoreKit Geo</div>
         <div class="product__desc">
-          Полный цикл документации керна на планшете или ноутбуке. Литология,
-          тектоника, прожилки, руда, метасоматоз, опробование, живая валидация — у ящика.
+          Полный цикл документации керна на планшете. Литология, тектоника, прожилки, руда, метасоматоз, опробование, живая валидация — у ящика.
         </div>
         <div class="product__more">Подробнее <span>→</span></div>
       </a>
@@ -1801,19 +1816,27 @@
         <div class="product__role">Поле · Буровой мастер</div>
         <div class="product__title">CoreKit Drill</div>
         <div class="product__desc">
-          Электронный буровой журнал. Рейсы, тех. режим, промывка, операции,
-          аварии, суточный рапорт мастера. Заменяет бумагу и тетрадь ПВА.
+          Электронный буровой журнал. Рейсы, тех. режим, промывка, операции, аварии, суточный рапорт мастера. Заменяет бумагу и тетрадь ПВА.
         </div>
         <div class="product__more">Подробнее <span>→</span></div>
       </a>
 
-      <a href="#station" class="product product--station reveal reveal-d2 tilt">
+      <a href="#trench" class="product product--trench reveal reveal-d2 tilt">
+        <div class="product__ico">📏</div>
+        <div class="product__role">Поле · Горный мастер</div>
+        <div class="product__title">CoreKit Trench</div>
+        <div class="product__desc">
+          Документация канав: рельеф, рыхлые отложения, структуры, пробы. Генерация полевого журнала с автоматической зарисовкой стенки и полотна.
+        </div>
+        <div class="product__more">Подробнее <span>→</span></div>
+      </a>
+
+      <a href="#station" class="product product--station reveal reveal-d3 tilt">
         <div class="product__ico">🧭</div>
         <div class="product__role">Офис · Ведущий геолог</div>
         <div class="product__title">CoreKit Station</div>
         <div class="product__desc">
-          Реестр, каталог проб, сводная статистика, верификация, проверка участка,
-          отчёты A4, полевой журнал-разворот и геологическая колонка.
+          Хаб для сбора данных по бурению и канавам. Верификация, проверка участка, сводная статистика, отчёты А4 и геологические колонки.
         </div>
         <div class="product__more">Подробнее <span>→</span></div>
       </a>
@@ -1923,8 +1946,6 @@
           <li>Выход за фактическую глубину скважины, отрицательные значения</li>
           <li>Дубликаты номеров проб и керновых ящиков</li>
           <li>Керн больше пробуренного, RQD больше выхода керна</li>
-          <li>Противоречия в датах, пустые обязательные поля паспорта</li>
-          <li>Кнопка «Проверить» с полным отчётом по категориям: ошибки и замечания</li>
         </ul>
       </div>
     </div>
@@ -2002,7 +2023,6 @@
           <li>Уд. вес, вязкость, содержание песка, коэф. фильтрации</li>
           <li>Чипы операций с быстрым выбором за один клик</li>
           <li>Копирование тех. режима из предыдущего рейса — для однотипных смен</li>
-          <li>Состав смены, отклонения, состояние оборудования, подписи мастеров</li>
         </ul>
       </div>
 
@@ -2022,7 +2042,6 @@
           <li>Приоритет и статус: открыт / принят / закрыт</li>
           <li>Столбчатая диаграмма проходки по дням</li>
           <li>Распределение по сменам I / II / III</li>
-          <li>Реестр аварий и открытые комментарии — одной сводкой</li>
         </ul>
       </div>
     </div>
@@ -2036,6 +2055,161 @@
     <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".6"/>
     <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".55"/>
     <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".55"/>
+  </svg>
+</div>
+
+<!-- ============================================================ -->
+<!-- TRENCH SECTION -->
+<!-- ============================================================ -->
+<section class="sticky-section sticky-section--trench" id="trench">
+  <div class="sticky-inner">
+    <div class="sticky-col--visual">
+      <div class="visual-frame">
+        <div class="visual-frame__bar">
+          <span></span><span></span><span></span>
+          <small id="trenchFrameLabel">trench.html · Паспорт канавы</small>
+        </div>
+        <div class="visual-frame__stack" id="trenchFrameStack">
+          <img src="screenshots/trench-pass.png" alt="CoreKit Trench — Паспорт" data-scene="0" data-failed="0">
+          <img src="screenshots/trench-structure.png" alt="CoreKit Trench — Структуры" data-scene="1" data-failed="0">
+          <img src="screenshots/trench-crap.png" alt="CoreKit Trench — Крап" data-scene="2" data-failed="0">
+          <img src="screenshots/trench-journal-1.png" alt="CoreKit Trench — Журнал 1" data-scene="3" data-failed="0">
+          <img src="screenshots/trench-journal-2.png" alt="CoreKit Trench — Журнал 2" data-scene="4" data-failed="0">
+          <img src="screenshots/trench-journal-3.png" alt="CoreKit Trench — Журнал 3" data-scene="5" data-failed="0">
+          
+          <div class="visual-frame__zoom">🔍 Увеличить</div>
+          <div class="visual-frame__ph">
+            <b>Ждём скриншоты Trench</b>
+            <span>Положите в папку <code>screenshots/</code>:</span>
+            <code>trench-pass.png</code>
+            <code>trench-structure.png</code>
+            <code>trench-crap.png</code>
+            <code>trench-journal-*.png</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky-col--text">
+      <div class="sticky-step sticky-step--trench" data-scene="0">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 01</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-pass.png" alt="CoreKit Trench — Паспорт и рельеф">
+        </div>
+        <h3 class="sticky-step__title">Паспорт и рельеф канавы</h3>
+        <p class="sticky-step__text">
+          Начало работы с канавой: указание её номера, азимута, длины, ширины и глубины.
+          Ввод точек рельефа поверхности и кровли коренных пород для последующего построения зарисовки.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Основной азимут и сегменты для извилистых канав</li>
+          <li>Глазомерная съёмка: расстояние вдоль оси → превышение</li>
+          <li>Глубина кровли коренных пород от поверхности</li>
+          <li>Описание рыхлых отложений (ПРС, делювий, элювий)</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--trench" data-scene="1">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 02</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-structure.png" alt="CoreKit Trench — Структуры">
+        </div>
+        <h3 class="sticky-step__title">Структуры и элементы залегания</h3>
+        <p class="sticky-step__text">
+          Ввод структурных элементов: жил, прожилков, трещин и зон дробления. Программа
+          автоматически пересчитывает видимый угол наклона структур с учётом локального азимута канавы.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Тип структуры, азимут и угол падения, мощность</li>
+          <li>Морфология и минерализация</li>
+          <li>Привязка к стенке или полотну</li>
+          <li>Отображение на зарисовке в журнале</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--trench" data-scene="2">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 03</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-crap.png" alt="CoreKit Trench — Крап">
+        </div>
+        <h3 class="sticky-step__title">Библиотека крапов (штриховок)</h3>
+        <p class="sticky-step__text">
+          Настройка визуализации пород. Каждой литологической разности можно назначить
+          свой крап для автоматической генерации зарисовки стенки и полотна.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Стандартная библиотека крапов (песчаники, андезиты, туфы и т.д.)</li>
+          <li>Настройка стилей линий для структурных элементов</li>
+          <li>Автоматический подбор крапа по названию породы</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--trench" data-scene="3">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 04</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-journal-1.png" alt="CoreKit Trench — Журнал 1">
+        </div>
+        <h3 class="sticky-step__title">Полевой журнал: Лист 1</h3>
+        <p class="sticky-step__text">
+          Генерация официального документа. Первый лист включает в себя титульный лист канавы.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Автоматическая сборка текстового описания интервалов</li>
+          <li>Учёт локального азимута для наклонных границ</li>
+          <li>Формат A4 Landscape (разворот)</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--trench" data-scene="4">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 05</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-journal-2.png" alt="CoreKit Trench — Журнал 2">
+        </div>
+        <h3 class="sticky-step__title">Полевой журнал: Лист 2</h3>
+        <p class="sticky-step__text">
+          Продолжение описания интервалов и начало визуализации данных.
+          Здесь формируются таблицы опробования.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Список проб с результатами (если загружены)</li>
+          <li>Условные обозначения и легенда</li>
+        </ul>
+      </div>
+
+      <div class="sticky-step sticky-step--trench" data-scene="5">
+        <div class="sticky-progress"><div class="sticky-progress__fill"></div></div>
+        <div class="sticky-step__num">Trench · 06</div>
+        <div class="step-image-mobile-wrap">
+          <img src="screenshots/trench-journal-3.png" alt="CoreKit Trench — Журнал 3">
+        </div>
+        <h3 class="sticky-step__title">Полевой журнал: Зарисовка</h3>
+        <p class="sticky-step__text">
+          Главная особенность CoreKit Trench. Автоматическая векторная зарисовка стенки
+          и полотна канавы с нанесением структурных элементов и штриховок пород.
+        </p>
+        <ul class="sticky-step__list">
+          <li>Отрисовка рельефа и кровли коренных пород</li>
+          <li>Наклонные контакты и жилы</li>
+          <li>Распределение проб по интервалам</li>
+          <li>Единый масштаб для всей канавы</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<div class="strata-divider strata-divider--flip" aria-hidden="true">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0 15 Q 200 10, 400 18 T 800 14 T 1200 20 T 1440 16 L 1440 28 Q 1200 32, 1000 26 T 600 30 T 200 26 T 0 28 Z" fill="url(#strata-soil)" opacity=".5"/>
+    <path d="M 0 28 Q 200 24, 400 30 T 800 26 T 1200 32 T 1440 28 L 1440 38 Q 1200 42, 1000 36 T 600 40 T 200 36 T 0 38 Z" fill="url(#strata-clay)" opacity=".5"/>
+    <path d="M 0 38 Q 200 34, 400 40 T 800 36 T 1200 42 T 1440 38 L 1440 46 Q 1200 50, 1000 44 T 600 48 T 200 44 T 0 46 Z" fill="url(#strata-rock)" opacity=".5"/>
+    <path d="M 0 46 Q 200 43, 400 48 T 800 44 T 1200 50 T 1440 46 L 1440 52 Q 1200 55, 1000 50 T 600 53 T 200 50 T 0 52 Z" fill="url(#strata-sand)" opacity=".5"/>
   </svg>
 </div>
 
@@ -2106,7 +2280,6 @@
           <li>Ручной ввод по 12 элементам, каппаметрия, привязка к партии и накладной</li>
           <li>Импорт CSV: автоопределение столбца пробы и элементов</li>
           <li>Cut-off с зелёной подсветкой проб выше порога</li>
-          <li>Просроченные пробы: >30 дней в лаборатории без результата</li>
         </ul>
       </div>
 
@@ -2126,7 +2299,6 @@
           <li>Распределение по породам, метасоматозу, рудным минералам</li>
           <li>Статистика по элементам: среднее, медиана, min/max, процентили P10–P90</li>
           <li>Коэффициент вариации CV с цветовой индикацией разброса</li>
-          <li>QA/QC: контроль соблюдения норм 1:20:1:1</li>
         </ul>
       </div>
 
@@ -2146,7 +2318,6 @@
           <li>Комментарии верификатора с датой и подписью</li>
           <li>Сброс верификации при импорте новой версии — никаких «верифицировано по устаревшим данным»</li>
           <li>Акт верификации A4: официальный документ с замечаниями и подписями</li>
-          <li>История изменений: кто, когда, что было, что стало — с откатом в один клик</li>
         </ul>
       </div>
 
@@ -2165,10 +2336,7 @@
           <li>Критические ошибки скважин и замечания — сводкой по участку</li>
           <li>Руда без опробования: интервалы с арсенопиритом / золотом без проб</li>
           <li>Просроченные пробы и пустые результаты у статуса «получены»</li>
-          <li>Неполная верификация: скважина верифицирована, но не все разделы отмечены</li>
-          <li>Отсутствие координат X/Y у скважины</li>
-          <li>Неединообразие справочников: «андезит» и «Андезит» — разные записи</li>
-          <li>Кнопка «Перейти» — прыжок прямо к проблемному полю в карточке скважины</li>
+          <li>Неполная верификация и неединообразие справочников</li>
         </ul>
       </div>
 
@@ -2189,7 +2357,6 @@
           <li>Справка по пробам, сводки по литологии, метасоматозу, руде</li>
           <li>QA/QC, сводка за период, отчёт по геологам</li>
           <li>Паспорт участка и акт верификации</li>
-          <li>Экспорт всей скважины в многолистовой Excel одним файлом</li>
         </ul>
       </div>
     </div>
@@ -2211,17 +2378,33 @@
   <div class="container">
     <div class="reveal">
       <div class="label">Официальные документы</div>
-      <h2>Полевой журнал<br><span class="grad">и геологическая колонка</span></h2>
+      <h2>Полевой журнал<br><span class="grad">скважин и канав</span></h2>
       <p class="lead">
         То, что отличает CoreKit от обычных таблиц. Настоящий полевой журнал
-        в формате A3-разворота и геологическая колонка с гибким масштабом —
-        формируются автоматически и сохраняются в PDF.
+        в формате A3 или А4-разворота (для скважин и канав) и геологическая колонка с гибким масштабом.
       </p>
     </div>
 
     <div class="docs-grid">
+      <!-- Doc 1: Trench Journal -->
       <div class="doc-card reveal">
-        <div class="doc-card__title">📖 Полевой журнал · A3</div>
+        <div class="doc-card__title">📏 Полевой журнал канавы · A4</div>
+        <p class="doc-card__sub">
+          Разворот A4 для документации канавы. Слева таблицы описания и опробования,
+          справа — детальная векторная зарисовка стенки и полотна.
+        </p>
+        <div class="doc-card__shot">
+          <img src="screenshots/trench-journal-1.png" alt="Полевой журнал канавы" data-failed="0" class="doc-shot-img">
+          <div class="ph">
+            <b>Скриншот не найден</b>
+            <span>Положите <code>screenshots/trench-journal-1.png</code></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doc 2: Station Journal -->
+      <div class="doc-card reveal reveal-d2">
+        <div class="doc-card__title">📖 Полевой журнал скважины · A3</div>
         <p class="doc-card__sub">
           Разворот A3 как в бумажном журнале: слева геологическая колонка с крапом,
           справа описание и таблица проб с результатами. Единицы переключаются.
@@ -2235,7 +2418,8 @@
         </div>
       </div>
 
-      <div class="doc-card reveal reveal-d2">
+      <!-- Doc 3: Station Column -->
+      <div class="doc-card reveal">
         <div class="doc-card__title">📊 Геологическая колонка</div>
         <p class="doc-card__sub">
           Книжный формат A4/A3. Гибридный масштаб растягивает редкие интервалы
@@ -2249,6 +2433,22 @@
           </div>
         </div>
       </div>
+
+      <!-- Doc 4: Trench Journal 2 -->
+      <div class="doc-card reveal reveal-d2">
+        <div class="doc-card__title">📏 Зарисовка канавы · A3</div>
+        <p class="doc-card__sub">
+          Детальный вид на зарисовку. Автоматическое нанесение литологических
+          границ, структурных элементов (жил, трещин) и интервалов опробования.
+        </p>
+        <div class="doc-card__shot">
+          <img src="screenshots/trench-journal-3.png" alt="Зарисовка канавы" data-failed="0" class="doc-shot-img">
+          <div class="ph">
+            <b>Скриншот не найден</b>
+            <span>Положите <code>screenshots/trench-journal-3.png</code></span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -2258,10 +2458,9 @@
   <div class="container container--narrow">
     <div class="reveal" style="text-align:center;">
       <div class="label" style="justify-content:center;">Реальный сценарий</div>
-      <h2 style="text-align:center;">Один участок, одна скважина,<br><span class="grad">шесть шагов</span></h2>
+      <h2 style="text-align:center;">Один участок,<br><span class="grad">полный цикл работ</span></h2>
       <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto;">
-        Как выглядит полный цикл работы с CoreKit на примере скважины DH-104
-        с рудным интервалом 45–62 м.
+        Как выглядит работа с CoreKit, когда на участке есть и скважины, и канавы.
       </p>
     </div>
 
@@ -2269,65 +2468,64 @@
       <div class="timeline__item">
         <div class="timeline__num">01</div>
         <div class="timeline__tag tag-station">Station · Офис</div>
-        <h3 class="timeline__title">Проектирование скважины</h3>
+        <h3 class="timeline__title">Проектирование</h3>
         <p class="timeline__text">
-          Ведущий геолог создаёт DH-104 в реестре Station: координаты, проектную глубину,
-          геологическое задание, назначение. Скважина пока в статусе «проектная» — ждёт бурения.
+          Ведущий геолог создаёт скважину DH-104 и канаву TR-05 в реестре Station: координаты,
+          проектную глубину/длину, геологическое задание. Объекты ждут выполнения работ.
         </p>
       </div>
 
       <div class="timeline__item">
         <div class="timeline__num">02</div>
         <div class="timeline__tag tag-drill">Drill · Поле</div>
-        <h3 class="timeline__title">Бурение и ежедневные рапорты</h3>
+        <h3 class="timeline__title">Бурение и проходка канавы</h3>
         <p class="timeline__text">
-          Буровой мастер ведёт смены в Drill: заполняет рейсы, тех. режим, промывку,
-          отмечает операции и аварии. В конце смены печатает суточный рапорт A4.
-          Геолог при необходимости оставляет комментарии — мастер видит их сразу.
+          Буровой мастер ведёт смены в Drill (рейсы, тех. режим, аварии).
+          Параллельно с этим горный мастер проходит канаву. В Drill формируется суточный рапорт.
         </p>
       </div>
 
       <div class="timeline__item">
         <div class="timeline__num">03</div>
         <div class="timeline__tag tag-geo">Geo · Поле</div>
-        <h3 class="timeline__title">Документация керна и полевая валидация</h3>
+        <h3 class="timeline__title">Документация керна</h3>
         <p class="timeline__text">
           Геолог документирует поднятый керн в Geo: литологию, тектонику, прожилки, руду,
           метасоматоз, опробование. Программа сразу подсвечивает ошибки — пересечения,
-          разрывы, дубликаты, выход за глубину. В конце цикла — автосборка описания.
+          разрывы, дубликаты, выход за глубину.
         </p>
       </div>
 
       <div class="timeline__item">
         <div class="timeline__num">04</div>
-        <div class="timeline__tag tag-office">Обмен · Флешка / Облако</div>
-        <h3 class="timeline__title">Передача данных в офис</h3>
+        <div class="timeline__tag tag-trench">Trench · Поле</div>
+        <h3 class="timeline__title">Документация канавы</h3>
         <p class="timeline__text">
-          Из Drill — файл рейсов «Для геолога». Из Geo — файл .json со всей документацией.
-          Оба сохраняются в облако или на флешку. Никаких серверов, никакой настройки сети.
+          Геолог описывает стенку и полотно канавы в Trench. Вводит рельеф, кровлю,
+          структурные элементы и отбирает пробы. Программа генерирует зарисовку
+          и полевой журнал A3.
         </p>
       </div>
 
       <div class="timeline__item">
         <div class="timeline__num">05</div>
-        <div class="timeline__tag tag-station">Station · Офис</div>
-        <h3 class="timeline__title">Импорт, верификация, проверка участка</h3>
+        <div class="timeline__tag tag-office">Обмен · Флешка / Облако</div>
+        <h3 class="timeline__title">Передача данных в офис</h3>
         <p class="timeline__text">
-          Импорт файлов в Station. Автоматически создаются записи в каталоге проб,
-          обновляется реестр. Верификация по разделам, акт верификации A4 или возврат
-          документатору. Далее — сквозная проверка участка: руда без опробования,
-          просроченные пробы, неполная верификация, координаты, единообразие справочников.
+          Из Drill — файл рейсов. Из Geo — файл .json со всей документацией скважины.
+          Из Trench — файл .json с описанием канавы и пробами.
+          Всё складывается в облако или на флешку.
         </p>
       </div>
 
       <div class="timeline__item">
         <div class="timeline__num">06</div>
         <div class="timeline__tag tag-station">Station · Офис</div>
-        <h3 class="timeline__title">Отчётность и аналитика</h3>
+        <h3 class="timeline__title">Импорт, верификация, проверка участка</h3>
         <p class="timeline__text">
-          Полевой журнал A3-разворот, геологическая колонка, сводки по литологии
-          и метасоматозу, рудная сводка, справка по пробам. Вся скважина — в Excel
-          многолистовым файлом. Статистика участка обновляется автоматически.
+          Импорт всех файлов в Station. Автоматически создаются записи в каталоге проб,
+          обновляется реестр. Верификация по разделам, акт верификации A4 или возврат
+          документатору. Сквозная проверка участка.
         </p>
       </div>
     </div>
@@ -2355,7 +2553,7 @@
       <div class="tech reveal reveal-d1">
         <div class="tech__ico">💻</div>
         <div class="tech__title">Планшет + ПК</div>
-        <div class="tech__text">Geo и Drill — на планшете. Station — на рабочем ПК. Один формат данных везде.</div>
+        <div class="tech__text">Geo, Drill и Trench — на планшете. Station — на рабочем ПК. Один формат данных везде.</div>
       </div>
       <div class="tech reveal reveal-d2">
         <div class="tech__ico">💾</div>
@@ -2439,6 +2637,10 @@
       <span class="map-legend__swatch map-legend__swatch--drill"></span>
       Скважина · DH-104
     </div>
+    <div class="map-legend__item">
+      <span class="map-legend__swatch map-legend__swatch--trench"></span>
+      Канава · TR-05
+    </div>
   </div>
 
   <div class="footer__inner">
@@ -2448,7 +2650,7 @@
         Core<span>Kit</span>
       </div>
       <p class="footer__desc">
-        Экосистема оффлайн-приложений для геологоразведки: документация керна,
+        Экосистема оффлайн-приложений для геологоразведки: документация керна, канав,
         буровые журналы, камеральная обработка и отчётность.
       </p>
     </div>
@@ -2457,6 +2659,7 @@
       <ul>
         <li><a href="#geo">CoreKit Geo</a></li>
         <li><a href="#drill">CoreKit Drill</a></li>
+        <li><a href="#trench">CoreKit Trench</a></li>
         <li><a href="#station">CoreKit Station</a></li>
       </ul>
     </div>
@@ -2673,7 +2876,7 @@ const marqueeItems = [
   'Полевой журнал A3', 'Геологическая колонка', 'Валидация',
   'Верификация', 'Проверка участка', 'Каталог проб',
   'Импорт CSV лаборатории', 'Cut-off', 'Справочники на ходу',
-  'Крапы пород', 'PDF и Excel'
+  'Крапы пород', 'PDF и Excel', 'Документация канав'
 ];
 const marqueeHTML = marqueeItems.map(t => `<span class="marquee__item">${t}</span>`).join('');
 marqueeTrack.innerHTML = marqueeHTML + marqueeHTML;
@@ -2743,6 +2946,13 @@ setupStickyShowcase(
   '#drill .sticky-step',
   'drillFrameLabel',
   ['drill.html · Рейсы', 'drill.html · Карточка рейса', 'drill.html · Дашборд']
+);
+
+setupStickyShowcase(
+  'trenchFrameStack',
+  '#trench .sticky-step',
+  'trenchFrameLabel',
+  ['trench.html · Паспорт', 'trench.html · Структуры', 'trench.html · Крап', 'trench.html · Журнал 1', 'trench.html · Журнал 2', 'trench.html · Журнал 3']
 );
 
 setupStickyShowcase(
